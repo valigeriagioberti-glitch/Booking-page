@@ -1,3 +1,11 @@
+const SuccessView: React.FC<SuccessViewProps> = ({ booking, onReset }) => {
+  if (!booking) {
+    return null;
+  }
+
+  const dailySubtotal = calculateDailySubtotal(booking.bagQuantities);
+
+
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import SuccessView from './SuccessView';
