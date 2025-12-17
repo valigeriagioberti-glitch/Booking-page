@@ -1,46 +1,58 @@
 import Stripe from 'stripe';
-import { json, readJson, assertEnv } from './_utils.js';
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-function safeJsonParse(s, fallback) {
-  try { return JSON.parse(s); } catch { return fallback; }
-}
+const calculateBillableDays = (start, end) => {
+  if (!start || !end) return 0;
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  
+  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return 0;
+
+  startDate.setHours(0, 0, 0, 0);
+  endDate.setHours(0, 0, 0, 0);
+  
+  if (endDate < startDate) return 0;
+  
+  const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+  return diffDays + 1;
+};
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return json(res, 405, { verified: false, error: 'Method not allowed' });
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return res.status(405).end('Method Not Allowed');
+  }
 
   try {
-    const STRIPE_SECRET_KEY = assertEnv('STRIPE_SECRET_KEY');
-    const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
-
-    const body = await readJson(req);
-    const sessionId = String(body.sessionId || '').trim();
-    if (!sessionId) return json(res, 400, { verified: false, error: 'Missing sessionId' });
+    const { sessionId } = req.body;
+    if (!sessionId) return res.status(400).json({ error: 'Missing session ID' });
 
     const session = await stripe.checkout.sessions.retrieve(sessionId);
 
-    const paid = session.payment_status === 'paid';
+    if (session.payment_status === 'paid') {
+      const bagQuantities = session.metadata.bagQuantities 
+        ? JSON.parse(session.metadata.bagQuantities) 
+        : {};
 
-    const md = session.metadata || {};
-    const bagQuantities = safeJsonParse(md.bagQuantities || '{}', { Small: 0, Medium: 0, Large: 0 });
+      const verifiedBooking = {
+        verified: true,
+        id: session.metadata.bookingId,
+        customerEmail: session.customer_details.email,
+        customerName: session.customer_details.name || 'Valued Customer',
+        amountTotal: session.amount_total / 100,
+        dropOffDate: session.metadata.dropOffDate,
+        pickUpDate: session.metadata.pickUpDate,
+        bagQuantities: bagQuantities,
+        billableDays: calculateBillableDays(session.metadata.dropOffDate, session.metadata.pickUpDate)
+      };
 
-    const booking = {
-      sessionId: session.id,
-      paymentStatus: session.payment_status,
-      amountTotal: session.amount_total ?? 0, // cents
-      currency: session.currency,
-      bookingId: md.bookingId,
-      dropOffDate: md.dropOffDate,
-      pickUpDate: md.pickUpDate,
-      days: Number(md.days || 0),
-      bagQuantities,
-      perDaySubtotal: Number(md.perDaySubtotal || 0),
-      customerEmail: md.customerEmail || session.customer_details?.email || '',
-      customerName: md.customerName || '',
-      customerPhone: md.customerPhone || '',
-    };
-
-    return json(res, 200, { verified: !!paid, booking });
-  } catch (e) {
-    return json(res, 500, { verified: false, error: e?.message || 'Server error' });
+      res.status(200).json(verifiedBooking);
+    } else {
+      res.status(200).json({ verified: false });
+    }
+  } catch (error) {
+    console.error('Verify Session Error:', error);
+    res.status(500).json({ error: error.message });
   }
 }

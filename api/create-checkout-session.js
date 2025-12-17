@@ -1,93 +1,121 @@
 import Stripe from 'stripe';
-import { json, readJson, assertEnv, safeParseInt, daysBetweenInclusive, randomBookingId } from './_utils.js';
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-const PRICES_EUR = { Small: 5, Medium: 6, Large: 7 };
+const PRICES = {
+  'Small': 500, // 5.00 EUR
+  'Medium': 600, // 6.00 EUR
+  'Large': 700  // 7.00 EUR
+};
 
-function normalizeBagQuantities(input) {
-  const q = input && typeof input === 'object' ? input : {};
-  const Small = safeParseInt(q.Small, 0);
-  const Medium = safeParseInt(q.Medium, 0);
-  const Large = safeParseInt(q.Large, 0);
-  const out = {
-    Small: Math.max(0, Small),
-    Medium: Math.max(0, Medium),
-    Large: Math.max(0, Large),
-  };
-  return out;
-}
+const calculateBillableDays = (start, end) => {
+  if (!start || !end) return 0;
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  
+  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return 0;
 
-function totalBags(q) {
-  return (q.Small || 0) + (q.Medium || 0) + (q.Large || 0);
-}
-
-function perDaySubtotal(q) {
-  return (q.Small || 0) * PRICES_EUR.Small + (q.Medium || 0) * PRICES_EUR.Medium + (q.Large || 0) * PRICES_EUR.Large;
-}
+  startDate.setHours(0, 0, 0, 0);
+  endDate.setHours(0, 0, 0, 0);
+  
+  if (endDate < startDate) return 0;
+  
+  const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+  return diffDays + 1;
+};
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return json(res, 405, { error: 'Method not allowed' });
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return res.status(405).end('Method Not Allowed');
+  }
 
   try {
-    const STRIPE_SECRET_KEY = assertEnv('STRIPE_SECRET_KEY');
-    const CLIENT_URL = assertEnv('CLIENT_URL');
+    const { bagQuantities, dropOffDate, pickUpDate, customerEmail, customerName, customerPhone, bookingId } = req.body;
+    
+    // Ensure no trailing slash on clientUrl
+    const origin = process.env.CLIENT_URL || req.headers.origin || 'https://luggagedepositrome.com';
+    const clientUrl = origin.replace(/\/$/, '');
 
-    const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: '2024-06-20' });
+    // 1. Validate Inputs
+    if (!bagQuantities || typeof bagQuantities !== 'object') {
+      return res.status(400).json({ error: 'Invalid bag quantities' });
+    }
+    if (!customerEmail || !customerEmail.includes('@')) {
+      return res.status(400).json({ error: 'Invalid email' });
+    }
+    if (!bookingId) {
+      return res.status(400).json({ error: 'Missing booking ID' });
+    }
 
-    const body = await readJson(req);
+    // 2. Calculate Days Server-Side
+    const days = calculateBillableDays(dropOffDate, pickUpDate);
+    if (days <= 0) {
+      return res.status(400).json({ error: 'Invalid date range' });
+    }
 
-    const bagQuantities = normalizeBagQuantities(body.bagQuantities);
-    const dropOffDate = body.dropOffDate;
-    const pickUpDate = body.pickUpDate;
+    // 3. Construct Line Items & Validate Price
+    const line_items = [];
+    const description = `Booking ${bookingId} (${days} days)`;
+    const validSizes = ['Small', 'Medium', 'Large'];
 
-    const customerEmail = String(body.customerEmail || '').trim();
-    const customerName = String(body.customerName || '').trim();
-    const customerPhone = String(body.customerPhone || '').trim();
+    for (const [size, qty] of Object.entries(bagQuantities)) {
+      if (!validSizes.includes(size)) {
+         return res.status(400).json({ error: `Invalid bag size: ${size}` });
+      }
+      
+      const quantityInt = parseInt(qty, 10);
+      
+      if (isNaN(quantityInt) || quantityInt < 0 || quantityInt > 50) {
+        return res.status(400).json({ error: `Invalid quantity for ${size}` });
+      }
 
-    if (!customerEmail || !/.+@.+\..+/.test(customerEmail)) return json(res, 400, { error: 'Invalid email.' });
-    if (!dropOffDate || !pickUpDate) return json(res, 400, { error: 'Missing dates.' });
+      if (quantityInt > 0) {
+        // Safe Price lookup
+        const unitAmountCents = PRICES[size] * days;
 
-    const days = daysBetweenInclusive(dropOffDate, pickUpDate);
-    if (!days || days <= 0) return json(res, 400, { error: 'Invalid date range.' });
-
-    if (totalBags(bagQuantities) <= 0) return json(res, 400, { error: 'Select at least 1 bag.' });
-
-    const perDay = perDaySubtotal(bagQuantities);
-    const total = perDay * days;
-    const amountTotal = Math.round(total * 100); // cents
-
-    const bookingId = randomBookingId();
-
-    const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      customer_email: customerEmail,
-      line_items: [
-        {
+        line_items.push({
           price_data: {
             currency: 'eur',
-            product_data: { name: 'Luggage storage reservation' },
-            unit_amount: amountTotal,
+            product_data: {
+              name: `${size} Luggage Storage (${days} days)`,
+              description: description,
+            },
+            unit_amount: unitAmountCents,
           },
-          quantity: 1,
-        },
-      ],
-      success_url: `${CLIENT_URL}/#/success/{CHECKOUT_SESSION_ID}`,
-      cancel_url: `${CLIENT_URL}/#/cancel`,
+          quantity: quantityInt,
+        });
+      }
+    }
+
+    if (line_items.length === 0) {
+      return res.status(400).json({ error: 'Please select at least one bag' });
+    }
+
+    // 4. Create Stripe Session
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      customer_email: customerEmail,
+      line_items: line_items,
+      mode: 'payment',
+      // CRITICAL: Path parameter for session ID
+      success_url: `${clientUrl}/#/success/{CHECKOUT_SESSION_ID}`,
+      cancel_url: `${clientUrl}/#/cancel`,
       metadata: {
         bookingId,
         dropOffDate,
         pickUpDate,
-        days: String(days),
-        bagQuantities: JSON.stringify(bagQuantities),
-        perDaySubtotal: String(perDay),
-        totalAmountEUR: String(total),
         customerEmail,
-        customerName,
-        customerPhone,
-      },
+        customerName: customerName || '',
+        customerPhone: customerPhone || '',
+        bagQuantities: JSON.stringify(bagQuantities)
+      }
     });
 
-    return json(res, 200, { url: session.url });
-  } catch (e) {
-    return json(res, 500, { error: e?.message || 'Server error' });
+    res.status(200).json({ url: session.url });
+
+  } catch (error) {
+    console.error('Stripe Create Session Error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 }
