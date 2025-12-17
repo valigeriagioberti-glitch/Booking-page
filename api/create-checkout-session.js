@@ -1,17 +1,5 @@
 import Stripe from 'stripe';
-
-function getStripe() {
-  const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) {
-    const err = new Error('Missing STRIPE_SECRET_KEY environment variable');
-    // @ts-ignore
-    err.statusCode = 500;
-    throw err;
-  }
-
-  // Set an explicit apiVersion for stability across Stripe SDK updates.
-  return new Stripe(key, { apiVersion: '2024-06-20' });
-}
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const PRICES = {
   'Small': 500, // 5.00 EUR
@@ -43,21 +31,18 @@ export default async function handler(req, res) {
   }
 
   try {
-    const stripe = getStripe();
-
     const { bagQuantities, dropOffDate, pickUpDate, customerEmail, customerName, customerPhone, bookingId } = req.body;
     
-    // Normalize client URL so Stripe always redirects to the correct SPA route.
-    // Common mistake: setting CLIENT_URL like "https://your-site.vercel.app/#".
-    // That results in "#/#/success..." and React Router falls back to the home page.
+    // Normalize client URL to a clean origin (no path, no hash).
+    // This prevents Stripe from redirecting to the wrong place if CLIENT_URL was set like
+    // "https://yourdomain.com/#" or includes any path.
     const rawClient = process.env.CLIENT_URL || req.headers.origin || 'https://luggagedepositrome.com';
-    let clientUrl = rawClient;
+    let clientUrl;
     try {
-      // Keep only the origin (scheme+host+port). Also strips any path/query/hash.
-      clientUrl = new URL(rawClient).origin;
+      const u = new URL(rawClient);
+      clientUrl = u.origin;
     } catch {
-      // If it's not a full URL, do a best-effort cleanup.
-      clientUrl = String(rawClient).split('#')[0].split('?')[0].replace(/\/$/, '');
+      clientUrl = String(rawClient).split('#')[0].replace(/\/$/, '');
     }
 
     // 1. Validate Inputs
@@ -138,9 +123,7 @@ export default async function handler(req, res) {
     res.status(200).json({ url: session.url });
 
   } catch (error) {
-    const status = error?.statusCode || 500;
     console.error('Stripe Create Session Error:', error);
-    // Return a helpful message so the frontend can show the real cause.
-    res.status(status).json({ error: error?.message || 'Internal Server Error' });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 }

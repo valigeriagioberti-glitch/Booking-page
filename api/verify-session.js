@@ -1,15 +1,5 @@
 import Stripe from 'stripe';
-
-function getStripe() {
-  const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) {
-    const err = new Error('Missing STRIPE_SECRET_KEY environment variable');
-    // @ts-ignore
-    err.statusCode = 500;
-    throw err;
-  }
-  return new Stripe(key, { apiVersion: '2024-06-20' });
-}
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const calculateBillableDays = (start, end) => {
   if (!start || !end) return 0;
@@ -35,7 +25,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    const stripe = getStripe();
     const { sessionId } = req.body;
     if (!sessionId) return res.status(400).json({ error: 'Missing session ID' });
 
@@ -64,7 +53,6 @@ export default async function handler(req, res) {
     }
   } catch (error) {
     console.error('Verify Session Error:', error);
-    const status = error?.statusCode || 500;
-    res.status(status).json({ error: error?.message || 'Internal Server Error' });
+    res.status(500).json({ error: error.message });
   }
 }
