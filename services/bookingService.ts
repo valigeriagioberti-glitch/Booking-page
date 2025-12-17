@@ -1,6 +1,9 @@
 import { BagSize, BookingDetails, BagQuantities } from '../types';
 import { PRICES } from '../constants';
 
+// Use relative path so it works on Vercel automatically (frontend and api on same origin)
+const API_URL = '/api';
+
 export const calculateBillableDays = (start: string, end: string): number => {
   if (!start || !end) return 0;
   
@@ -15,10 +18,6 @@ export const calculateBillableDays = (start: string, end: string): number => {
 
   const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-  
-  // Drop-off day counts as 1 full day.
-  // Example: Drop 1st, Pick 1st = 1 day.
-  // Example: Drop 1st, Pick 2nd = 2 days.
   return diffDays + 1;
 };
 
@@ -47,21 +46,37 @@ export const generateBookingId = (): string => {
   return `LDR-${yyyy}${mm}${dd}-${random}`;
 };
 
-export const processMockStripePayment = async (amount: number): Promise<{ success: boolean; id: string }> => {
-  // Simulate network delay for Stripe
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        success: true,
-        id: `pi_${Math.random().toString(36).substr(2, 9)}`
-      });
-    }, 2000);
+export const createCheckoutSession = async (data: any): Promise<{ url: string }> => {
+  const response = await fetch(`${API_URL}/create-checkout-session`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
   });
+  
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to create checkout session');
+  }
+  
+  return response.json();
+};
+
+export const verifySession = async (sessionId: string): Promise<any> => {
+  const response = await fetch(`${API_URL}/verify-session`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sessionId }),
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to verify session');
+  }
+  
+  return response.json();
 };
 
 export const saveBooking = (booking: BookingDetails): void => {
-  // Simulate saving to database
-  console.log("Saving booking to DB:", booking);
+  // Client-side save (optional, since data comes from verifySession)
   const existing = JSON.parse(localStorage.getItem('bookings') || '[]');
   existing.push(booking);
   localStorage.setItem('bookings', JSON.stringify(existing));
