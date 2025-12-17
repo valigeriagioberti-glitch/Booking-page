@@ -20,7 +20,7 @@ const Success: React.FC<SuccessProps> = ({ language }) => {
 
   useEffect(() => {
     // CRITICAL: Do NOT redirect automatically.
-    // If session_id is missing, we simply stop loading and show the "No Payment Found" UI below.
+    // If session_id is missing, we simply stop loading and show the "No Payment Session" UI below.
     if (!sessionId) {
       setLoading(false);
       return;
@@ -68,7 +68,7 @@ const Success: React.FC<SuccessProps> = ({ language }) => {
     );
   }
 
-  // Explicitly handle missing session ID
+  // Explicitly handle missing session ID without redirecting
   if (!sessionId) {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
@@ -79,7 +79,7 @@ const Success: React.FC<SuccessProps> = ({ language }) => {
         </p>
         <button 
           onClick={() => navigate('/')}
-          className="bg-green-900 text-white px-6 py-3 rounded-lg font-bold"
+          className="bg-green-900 text-white px-6 py-3 rounded-lg font-bold hover:bg-green-800 transition-colors"
         >
           Return Home
         </button>
@@ -95,7 +95,7 @@ const Success: React.FC<SuccessProps> = ({ language }) => {
         <p className="text-gray-600 mb-6">{error}</p>
         <button 
           onClick={() => navigate('/')}
-          className="bg-green-900 text-white px-6 py-3 rounded-lg font-bold"
+          className="bg-green-900 text-white px-6 py-3 rounded-lg font-bold hover:bg-green-800 transition-colors"
         >
           Return Home
         </button>
