@@ -19,8 +19,10 @@ const Success: React.FC<SuccessProps> = ({ language }) => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // CRITICAL: Do NOT redirect automatically.
+    // If session_id is missing, we simply stop loading and show the "No Payment Found" UI below.
     if (!sessionId) {
-      navigate('/');
+      setLoading(false);
       return;
     }
 
@@ -55,13 +57,32 @@ const Success: React.FC<SuccessProps> = ({ language }) => {
     };
 
     verify();
-  }, [sessionId, navigate]);
+  }, [sessionId]);
 
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center">
         <Loader2 className="w-12 h-12 text-green-900 animate-spin mb-4" />
         <h2 className="text-xl font-bold text-gray-900">Verifying Payment...</h2>
+      </div>
+    );
+  }
+
+  // Explicitly handle missing session ID
+  if (!sessionId) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
+        <AlertCircle className="w-16 h-16 text-gray-400 mb-4" />
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">No Payment Session</h2>
+        <p className="text-gray-600 mb-6 text-center max-w-md">
+          We couldn't find a payment session ID. This page should be accessed after a successful payment.
+        </p>
+        <button 
+          onClick={() => navigate('/')}
+          className="bg-green-900 text-white px-6 py-3 rounded-lg font-bold"
+        >
+          Return Home
+        </button>
       </div>
     );
   }

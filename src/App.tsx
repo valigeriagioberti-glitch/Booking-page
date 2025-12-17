@@ -20,6 +20,7 @@ const App: React.FC = () => {
           <Route path="/" element={<Home language={language} />} />
           <Route path="/success" element={<Success language={language} />} />
           <Route path="/cancel" element={<Cancel language={language} />} />
+          <Route path="*" element={<Home language={language} />} />
         </Routes>
       </div>
     </HashRouter>
