@@ -33,17 +33,9 @@ export default async function handler(req, res) {
   try {
     const { bagQuantities, dropOffDate, pickUpDate, customerEmail, customerName, customerPhone, bookingId } = req.body;
     
-    // Normalize client URL to a clean origin (no path, no hash).
-    // This prevents Stripe from redirecting to the wrong place if CLIENT_URL was set like
-    // "https://yourdomain.com/#" or includes any path.
-    const rawClient = process.env.CLIENT_URL || req.headers.origin || 'https://luggagedepositrome.com';
-    let clientUrl;
-    try {
-      const u = new URL(rawClient);
-      clientUrl = u.origin;
-    } catch {
-      clientUrl = String(rawClient).split('#')[0].replace(/\/$/, '');
-    }
+    // Ensure no trailing slash on clientUrl
+    const origin = process.env.CLIENT_URL || req.headers.origin || 'https://luggagedepositrome.com';
+    const clientUrl = origin.replace(/\/$/, '');
 
     // 1. Validate Inputs
     if (!bagQuantities || typeof bagQuantities !== 'object') {

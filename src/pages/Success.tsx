@@ -1,206 +1,85 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import jsPDF from 'jspdf';
+import React, { useEffect, useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import { verifySession } from '../services/bookingService';
-
-type VerifiedBooking = {
-  verified: boolean;
-  id: string;
-  customerEmail: string;
-  customerName: string;
-  amountTotal: number;
-  dropOffDate: string;
-  pickUpDate: string;
-  billableDays: number;
-  bagQuantities: Record<string, number>;
-};
-
-const fmtDate = (iso: string) => {
-  try {
-    const d = new Date(iso);
-    return new Intl.DateTimeFormat('en-GB', { year: 'numeric', month: 'short', day: '2-digit' }).format(d);
-  } catch {
-    return iso;
-  }
-};
 
 export default function Success() {
   const { sessionId } = useParams();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [booking, setBooking] = useState<VerifiedBooking | null>(null);
+  const [status, setStatus] = useState("loading"); // loading, verified, failed, error
+  const [data, setData] = useState<any>(null);
 
   useEffect(() => {
-    let alive = true;
-    (async () => {
-      try {
-        if (!sessionId) {
-          throw new Error('Missing Stripe session ID in the URL.');
-        }
-        const res = await verifySession(sessionId);
-        if (!alive) return;
+    if (!sessionId) {
+      setStatus("missing_id");
+      return;
+    }
 
-        if (!res?.verified) {
-          throw new Error('Payment not verified yet. If you just paid, refresh in a few seconds.');
+    // Call API to verify
+    verifySession(sessionId)
+      .then(res => {
+        console.log("Verification result:", res);
+        if (res.verified) {
+            setStatus("verified");
+            setData(res);
+        } else {
+            setStatus("failed");
         }
-        setBooking(res);
-      } catch (e: any) {
-        setError(e?.message || 'Could not verify payment.');
-      } finally {
-        if (alive) setLoading(false);
-      }
-    })();
-    return () => {
-      alive = false;
-    };
+      })
+      .catch((err) => {
+        console.error("Verification error:", err);
+        setStatus("error");
+      });
   }, [sessionId]);
 
-  const lineItems = useMemo(() => {
-    const bq = booking?.bagQuantities || {};
-    const entries = Object.entries(bq)
-      .filter(([, qty]) => Number(qty) > 0)
-      .map(([size, qty]) => ({ size, qty: Number(qty) }));
-    return entries.length ? entries : [];
-  }, [booking]);
-
-  const downloadPdf = () => {
-    if (!booking) return;
-
-    const doc = new jsPDF();
-    const left = 14;
-    let y = 16;
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(16);
-    doc.text('Luggage Deposit Rome', left, y);
-    y += 8;
-    doc.setFontSize(12);
-    doc.text('Booking Confirmation', left, y);
-    y += 10;
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(11);
-    doc.text(`Booking ID: ${booking.id}`, left, y); y += 7;
-    doc.text(`Customer: ${booking.customerName}`, left, y); y += 7;
-    doc.text(`Email: ${booking.customerEmail}`, left, y); y += 7;
-    doc.text(`Drop-off: ${fmtDate(booking.dropOffDate)}`, left, y); y += 7;
-    doc.text(`Pick-up: ${fmtDate(booking.pickUpDate)}`, left, y); y += 7;
-    doc.text(`Billable days: ${booking.billableDays}`, left, y); y += 9;
-
-    doc.setFont('helvetica', 'bold');
-    doc.text('Bags', left, y); y += 7;
-    doc.setFont('helvetica', 'normal');
-    if (lineItems.length === 0) {
-      doc.text('—', left, y); y += 7;
-    } else {
-      for (const item of lineItems) {
-        doc.text(`${item.size}: ${item.qty}`, left, y);
-        y += 7;
-      }
-    }
-    y += 4;
-
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Total paid: €${booking.amountTotal.toFixed(2)}`, left, y);
-    y += 10;
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.text('Please show this confirmation at drop-off.', left, y);
-
-    const safeId = String(booking.id || 'booking').replace(/[^a-z0-9_-]+/gi, '_');
-    doc.save(`booking_${safeId}.pdf`);
-  };
-
   return (
-    <div className="min-h-screen bg-white p-6 md:p-10">
-      <div className="max-w-3xl mx-auto">
-        <div className="rounded-2xl border border-green-200 bg-green-50 p-6 md:p-8">
-          <h1 className="text-3xl font-bold text-green-900">Payment successful</h1>
-          <p className="mt-2 text-green-900/80">
-            Your booking is confirmed. You can download your PDF confirmation below.
-          </p>
+    <div className="min-h-screen bg-white p-6 md:p-12 font-sans flex flex-col items-center">
+      <div className="max-w-3xl w-full bg-green-50 border border-green-200 rounded-xl p-8 shadow-sm">
+        <h1 className="text-3xl font-bold text-green-800 mb-6 border-b border-green-200 pb-4">
+          SUCCESS ROUTE MATCHED
+        </h1>
+        
+        <div className="grid gap-6">
+          <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Session ID</p>
+            <p className="font-mono text-sm md:text-base break-all text-gray-800 bg-gray-50 p-2 rounded">
+              {sessionId || "None provided"}
+            </p>
+          </div>
+
+          <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+            <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-1">Status</p>
+            <div className="flex items-center gap-2">
+              <div className={`w-3 h-3 rounded-full ${
+                status === 'verified' ? 'bg-green-500' : 
+                status === 'loading' ? 'bg-blue-500 animate-pulse' : 
+                'bg-red-500'
+              }`}></div>
+              <p className={`font-bold text-lg uppercase ${
+                status === 'verified' ? 'text-green-700' : 
+                status === 'loading' ? 'text-blue-700' : 
+                'text-red-700'
+              }`}>
+                {status}
+              </p>
+            </div>
+            {status === 'loading' && <p className="text-sm text-gray-500 mt-1">Verifying payment with server...</p>}
+            {status === 'error' && <p className="text-sm text-red-500 mt-1">Could not connect to verification server. (This is expected in preview without a backend)</p>}
+          </div>
+
+          {data && (
+            <div className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-auto shadow-inner max-h-96">
+              <p className="text-xs text-gray-400 font-bold uppercase mb-2">Server Response</p>
+              <pre className="text-xs font-mono">{JSON.stringify(data, null, 2)}</pre>
+            </div>
+          )}
         </div>
 
-        <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 md:p-8">
-          {loading && (
-            <p className="text-gray-700">Verifying your payment…</p>
-          )}
-
-          {!loading && error && (
-            <div className="space-y-3">
-              <p className="font-semibold text-red-700">Couldn’t load confirmation</p>
-              <p className="text-gray-700">{error}</p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => window.location.reload()}
-                  className="inline-flex items-center justify-center rounded-lg bg-gray-900 px-4 py-2 font-semibold text-white"
-                >
-                  Refresh
-                </button>
-                <Link
-                  to="/"
-                  className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-4 py-2 font-semibold text-gray-900"
-                >
-                  Back to booking
-                </Link>
-              </div>
-            </div>
-          )}
-
-          {!loading && booking && (
-            <div className="space-y-5">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Booking ID</p>
-                  <p className="mt-1 font-mono text-sm break-all">{booking.id}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Total paid</p>
-                  <p className="mt-1 text-lg font-bold">€{booking.amountTotal.toFixed(2)}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Drop-off</p>
-                  <p className="mt-1 font-semibold">{fmtDate(booking.dropOffDate)}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Pick-up</p>
-                  <p className="mt-1 font-semibold">{fmtDate(booking.pickUpDate)}</p>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-gray-500">Bags</p>
-                {lineItems.length === 0 ? (
-                  <p className="mt-1 text-gray-700">—</p>
-                ) : (
-                  <ul className="mt-2 space-y-1 text-gray-800">
-                    {lineItems.map((i) => (
-                      <li key={i.size} className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
-                        <span className="font-semibold">{i.size}</span>
-                        <span className="font-mono">{i.qty}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <button
-                  onClick={downloadPdf}
-                  className="inline-flex items-center justify-center rounded-lg bg-green-900 px-5 py-3 font-bold text-white"
-                >
-                  Download PDF confirmation
-                </button>
-                <Link
-                  to="/"
-                  className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-5 py-3 font-bold text-gray-900"
-                >
-                  Make another booking
-                </Link>
-              </div>
-            </div>
-          )}
+        <div className="mt-8 pt-6 border-t border-green-200">
+          <Link 
+            to="/" 
+            className="inline-flex items-center justify-center bg-green-900 text-white px-8 py-3 rounded-lg font-bold hover:bg-green-800 transition-colors shadow-md hover:shadow-lg"
+          >
+            Return Home
+          </Link>
         </div>
       </div>
     </div>
