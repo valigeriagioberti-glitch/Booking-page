@@ -1,0 +1,6 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* small polish to feel like the screenshot */
+:root { color-scheme: light; }
