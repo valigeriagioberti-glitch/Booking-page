@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import SuccessView from '../components/SuccessView';
 import { verifySession } from '../services/bookingService';
 import { BookingDetails, PaymentStatus, Language } from '../types';
@@ -10,9 +10,9 @@ interface SuccessProps {
 }
 
 const Success: React.FC<SuccessProps> = ({ language }) => {
-  const [searchParams] = useSearchParams();
+  // CRITICAL: Get sessionId from path params
+  const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
-  const sessionId = searchParams.get('session_id');
 
   const [booking, setBooking] = useState<BookingDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -21,13 +21,13 @@ const Success: React.FC<SuccessProps> = ({ language }) => {
   // Debug indicator to confirm route loading
   const debugHeader = (
     <div className="bg-yellow-200 text-black text-center py-2 font-mono font-bold text-sm border-b border-yellow-300">
-      DEBUG: SUCCESS PAGE LOADED
+      DEBUG: SUCCESS PAGE LOADED (ID: {sessionId || 'MISSING'})
     </div>
   );
 
   useEffect(() => {
     // CRITICAL: Do NOT redirect automatically.
-    // If session_id is missing, we simply stop loading and show the "No Payment Session" UI below.
+    // If sessionId is missing, we simply stop loading and show the "No Payment Session" UI below.
     if (!sessionId) {
       setLoading(false);
       return;

@@ -18,7 +18,8 @@ const App: React.FC = () => {
         
         <Routes>
           <Route path="/" element={<Home language={language} />} />
-          <Route path="/success" element={<Success language={language} />} />
+          {/* CRITICAL: Route expects sessionId as a path parameter now */}
+          <Route path="/success/:sessionId" element={<Success language={language} />} />
           <Route path="/cancel" element={<Cancel language={language} />} />
           <Route path="*" element={<Home language={language} />} />
         </Routes>

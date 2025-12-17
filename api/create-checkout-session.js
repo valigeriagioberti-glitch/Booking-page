@@ -95,7 +95,8 @@ export default async function handler(req, res) {
       customer_email: customerEmail,
       line_items: line_items,
       mode: 'payment',
-      success_url: `${clientUrl}/#/success?session_id={CHECKOUT_SESSION_ID}`,
+      // CRITICAL UPDATE: Pass session_id as a path parameter, not a query string
+      success_url: `${clientUrl}/#/success/{CHECKOUT_SESSION_ID}`,
       cancel_url: `${clientUrl}/#/cancel`,
       metadata: {
         bookingId,
