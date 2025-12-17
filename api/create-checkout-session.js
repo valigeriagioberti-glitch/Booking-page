@@ -1,4 +1,5 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+import Stripe from 'stripe';
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const PRICES = {
   'Small': 500, // 5.00 EUR
@@ -30,8 +31,11 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { bagQuantities, dropOffDate, pickUpDate, customerEmail, bookingId } = req.body;
-    const clientUrl = process.env.CLIENT_URL || req.headers.origin || 'https://luggagedepositrome.com';
+    const { bagQuantities, dropOffDate, pickUpDate, customerEmail, customerName, customerPhone, bookingId } = req.body;
+    
+    // Ensure no trailing slash on clientUrl to prevent double slashes in constructed URLs
+    const origin = process.env.CLIENT_URL || req.headers.origin || 'https://luggagedepositrome.com';
+    const clientUrl = origin.replace(/\/$/, '');
 
     // 1. Validate Inputs
     if (!bagQuantities || typeof bagQuantities !== 'object') {
@@ -94,13 +98,17 @@ export default async function handler(req, res) {
       customer_email: customerEmail,
       line_items: line_items,
       mode: 'payment',
-      success_url: `${clientUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${clientUrl}/cancel`,
+      // CRITICAL: Use path parameter for session ID to work correctly with HashRouter
+      // Resulting URL: https://site.com/#/success/cs_test_123
+      success_url: `${clientUrl}/#/success/{CHECKOUT_SESSION_ID}`,
+      cancel_url: `${clientUrl}/#/cancel`,
       metadata: {
         bookingId,
         dropOffDate,
         pickUpDate,
         customerEmail,
+        customerName: customerName || '',
+        customerPhone: customerPhone || '',
         bagQuantities: JSON.stringify(bagQuantities)
       }
     });
