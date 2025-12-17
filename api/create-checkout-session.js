@@ -32,10 +32,14 @@ export default async function handler(req, res) {
 
   try {
     const { bagQuantities, dropOffDate, pickUpDate, customerEmail, customerName, customerPhone, bookingId } = req.body;
+<<<<<<< HEAD
     
     // Ensure no trailing slash on clientUrl to prevent double slashes in constructed URLs
     const origin = process.env.CLIENT_URL || req.headers.origin || 'https://luggagedepositrome.com';
     const clientUrl = origin.replace(/\/$/, '');
+=======
+    const clientUrl = process.env.CLIENT_URL || req.headers.origin || 'https://luggagedepositrome.com';
+>>>>>>> 51eada675b9bcb87df31da1cc061248226969ca3
 
     // 1. Validate Inputs
     if (!bagQuantities || typeof bagQuantities !== 'object') {
@@ -98,8 +102,12 @@ export default async function handler(req, res) {
       customer_email: customerEmail,
       line_items: line_items,
       mode: 'payment',
+<<<<<<< HEAD
       // CRITICAL: Use path parameter for session ID to work correctly with HashRouter
       // Resulting URL: https://site.com/#/success/cs_test_123
+=======
+      // CRITICAL UPDATE: Pass session_id as a path parameter, not a query string
+>>>>>>> 51eada675b9bcb87df31da1cc061248226969ca3
       success_url: `${clientUrl}/#/success/{CHECKOUT_SESSION_ID}`,
       cancel_url: `${clientUrl}/#/cancel`,
       metadata: {
