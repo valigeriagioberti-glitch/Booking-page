@@ -1,4 +1,5 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+import Stripe from 'stripe';
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // Disable Vercel's default body parsing to handle the raw stream for signature verification
 export const config = {
@@ -39,7 +40,7 @@ export default async function handler(req, res) {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
     
-    // Log success (In a real app with a DB, you would update the order status here)
+    // Log success
     console.log(`✅ [Webhook] Booking Paid: ${session.metadata.bookingId}`);
     console.log(`   Email: ${session.customer_details.email}`);
     console.log(`   Amount: ${session.amount_total / 100} ${session.currency.toUpperCase()}`);
