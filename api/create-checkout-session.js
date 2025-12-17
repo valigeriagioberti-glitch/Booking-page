@@ -95,8 +95,8 @@ export default async function handler(req, res) {
       customer_email: customerEmail,
       line_items: line_items,
       mode: 'payment',
-      success_url: `${clientUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${clientUrl}/cancel`,
+      success_url: `${clientUrl}/#/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${clientUrl}/#/cancel`,
       metadata: {
         bookingId,
         dropOffDate,
