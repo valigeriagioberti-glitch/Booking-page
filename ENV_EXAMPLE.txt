@@ -1,0 +1,13 @@
+# Vercel Environment Variables
+# Add these in Vercel Project Settings -> Environment Variables
+
+# Stripe Secret Key (sk_live_... or sk_test_...)
+STRIPE_SECRET_KEY=sk_test_...
+
+# Stripe Webhook Secret (whsec_...)
+# Generated when you add a webhook endpoint in Stripe Dashboard
+STRIPE_WEBHOOK_SECRET=whsec_...
+
+# Client URL (Your Production Domain)
+# Used for Success/Cancel redirects
+CLIENT_URL=https://your-project.vercel.app
