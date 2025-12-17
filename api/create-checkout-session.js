@@ -1,5 +1,17 @@
 import Stripe from 'stripe';
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+function getStripe() {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) {
+    const err = new Error('Missing STRIPE_SECRET_KEY environment variable');
+    // @ts-ignore
+    err.statusCode = 500;
+    throw err;
+  }
+
+  // Set an explicit apiVersion for stability across Stripe SDK updates.
+  return new Stripe(key, { apiVersion: '2024-06-20' });
+}
 
 const PRICES = {
   'Small': 500, // 5.00 EUR
@@ -31,6 +43,8 @@ export default async function handler(req, res) {
   }
 
   try {
+    const stripe = getStripe();
+
     const { bagQuantities, dropOffDate, pickUpDate, customerEmail, customerName, customerPhone, bookingId } = req.body;
     
     // Ensure no trailing slash on clientUrl
@@ -115,7 +129,9 @@ export default async function handler(req, res) {
     res.status(200).json({ url: session.url });
 
   } catch (error) {
+    const status = error?.statusCode || 500;
     console.error('Stripe Create Session Error:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    // Return a helpful message so the frontend can show the real cause.
+    res.status(status).json({ error: error?.message || 'Internal Server Error' });
   }
 }

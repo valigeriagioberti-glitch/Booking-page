@@ -35,7 +35,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       window.location.href = url;
     } catch (error) {
       console.error(error);
-      alert("Could not initialize Stripe Checkout. Please try again.");
+      const msg = (error instanceof Error && error.message)
+        ? error.message
+        : 'Could not initialize Stripe Checkout. Please try again.';
+      alert(msg);
       setIsProcessing(false);
     }
   };
