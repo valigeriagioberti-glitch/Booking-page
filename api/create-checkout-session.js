@@ -47,9 +47,18 @@ export default async function handler(req, res) {
 
     const { bagQuantities, dropOffDate, pickUpDate, customerEmail, customerName, customerPhone, bookingId } = req.body;
     
-    // Ensure no trailing slash on clientUrl
-    const origin = process.env.CLIENT_URL || req.headers.origin || 'https://luggagedepositrome.com';
-    const clientUrl = origin.replace(/\/$/, '');
+    // Normalize client URL so Stripe always redirects to the correct SPA route.
+    // Common mistake: setting CLIENT_URL like "https://your-site.vercel.app/#".
+    // That results in "#/#/success..." and React Router falls back to the home page.
+    const rawClient = process.env.CLIENT_URL || req.headers.origin || 'https://luggagedepositrome.com';
+    let clientUrl = rawClient;
+    try {
+      // Keep only the origin (scheme+host+port). Also strips any path/query/hash.
+      clientUrl = new URL(rawClient).origin;
+    } catch {
+      // If it's not a full URL, do a best-effort cleanup.
+      clientUrl = String(rawClient).split('#')[0].split('?')[0].replace(/\/$/, '');
+    }
 
     // 1. Validate Inputs
     if (!bagQuantities || typeof bagQuantities !== 'object') {
