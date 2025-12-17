@@ -42,9 +42,11 @@ const SuccessView: React.FC<SuccessViewProps> = ({ booking, onReset, language })
       // Temporarily reveal the print view for capture if hidden
       const element = receiptRef.current;
       
-      // Force block display for capture
-      element.classList.remove('hidden');
-      element.classList.add('block');
+      // Force display for capture, but position off-screen to prevent UI shift
+      element.style.display = 'block';
+      element.style.position = 'absolute';
+      element.style.left = '-9999px';
+      element.style.top = '0';
       
       const canvas = await html2canvas(element, {
         scale: 2, // Higher resolution
@@ -52,10 +54,11 @@ const SuccessView: React.FC<SuccessViewProps> = ({ booking, onReset, language })
         backgroundColor: '#ffffff',
       });
 
-      // Hide it again unless printing
-      element.classList.remove('block');
-      element.classList.add('hidden');
-      element.classList.add('print:block');
+      // Reset styles to hide it again
+      element.style.display = ''; // Reverts to class-based hidden
+      element.style.position = '';
+      element.style.left = '';
+      element.style.top = '';
 
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');

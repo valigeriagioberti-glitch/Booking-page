@@ -35,7 +35,7 @@ const Success: React.FC<SuccessProps> = ({ language }) => {
             pickUpDate: data.pickUpDate,
             customerName: data.customerName,
             customerEmail: data.customerEmail,
-            customerPhone: '', // Phone is not always returned by Stripe metadata unless explicitly added
+            customerPhone: data.customerPhone || '',
             billableDays: data.billableDays,
             totalPrice: data.amountTotal,
             paymentStatus: PaymentStatus.Paid,

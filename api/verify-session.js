@@ -38,8 +38,10 @@ export default async function handler(req, res) {
       const verifiedBooking = {
         verified: true,
         id: session.metadata.bookingId,
-        customerEmail: session.customer_details.email,
-        customerName: session.customer_details.name || 'Valued Customer',
+        // Prefer metadata details as they match the form, fallback to Stripe customer details
+        customerEmail: session.metadata.customerEmail || session.customer_details.email,
+        customerName: session.metadata.customerName || session.customer_details.name || 'Valued Customer',
+        customerPhone: session.metadata.customerPhone || '',
         amountTotal: session.amount_total / 100,
         dropOffDate: session.metadata.dropOffDate,
         pickUpDate: session.metadata.pickUpDate,

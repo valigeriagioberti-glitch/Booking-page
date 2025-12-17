@@ -31,7 +31,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { bagQuantities, dropOffDate, pickUpDate, customerEmail, bookingId } = req.body;
+    const { bagQuantities, dropOffDate, pickUpDate, customerEmail, customerName, customerPhone, bookingId } = req.body;
     const clientUrl = process.env.CLIENT_URL || req.headers.origin || 'https://luggagedepositrome.com';
 
     // 1. Validate Inputs
@@ -102,6 +102,8 @@ export default async function handler(req, res) {
         dropOffDate,
         pickUpDate,
         customerEmail,
+        customerName: customerName || '',
+        customerPhone: customerPhone || '',
         bagQuantities: JSON.stringify(bagQuantities)
       }
     });
