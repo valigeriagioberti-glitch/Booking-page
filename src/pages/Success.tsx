@@ -18,6 +18,13 @@ const Success: React.FC<SuccessProps> = ({ language }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Debug indicator to confirm route loading
+  const debugHeader = (
+    <div className="bg-yellow-200 text-black text-center py-2 font-mono font-bold text-sm border-b border-yellow-300">
+      DEBUG: SUCCESS PAGE LOADED
+    </div>
+  );
+
   useEffect(() => {
     // CRITICAL: Do NOT redirect automatically.
     // If session_id is missing, we simply stop loading and show the "No Payment Session" UI below.
@@ -61,57 +68,67 @@ const Success: React.FC<SuccessProps> = ({ language }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center">
-        <Loader2 className="w-12 h-12 text-green-900 animate-spin mb-4" />
-        <h2 className="text-xl font-bold text-gray-900">Verifying Payment...</h2>
-      </div>
+      <>
+        {debugHeader}
+        <div className="min-h-screen bg-white flex flex-col items-center justify-center">
+          <Loader2 className="w-12 h-12 text-green-900 animate-spin mb-4" />
+          <h2 className="text-xl font-bold text-gray-900">Verifying Payment...</h2>
+        </div>
+      </>
     );
   }
 
   // Explicitly handle missing session ID without redirecting
   if (!sessionId) {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
-        <AlertCircle className="w-16 h-16 text-gray-400 mb-4" />
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">No Payment Session</h2>
-        <p className="text-gray-600 mb-6 text-center max-w-md">
-          We couldn't find a payment session ID. This page should be accessed after a successful payment.
-        </p>
-        <button 
-          onClick={() => navigate('/')}
-          className="bg-green-900 text-white px-6 py-3 rounded-lg font-bold hover:bg-green-800 transition-colors"
-        >
-          Return Home
-        </button>
-      </div>
+      <>
+        {debugHeader}
+        <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
+          <AlertCircle className="w-16 h-16 text-gray-400 mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">No Payment Session</h2>
+          <p className="text-gray-600 mb-6 text-center max-w-md">
+            We couldn't find a payment session ID. This page should be accessed after a successful payment.
+          </p>
+          <button 
+            onClick={() => navigate('/')}
+            className="bg-green-900 text-white px-6 py-3 rounded-lg font-bold hover:bg-green-800 transition-colors"
+          >
+            Return Home
+          </button>
+        </div>
+      </>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
-        <AlertCircle className="w-16 h-16 text-red-600 mb-4" />
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Something went wrong</h2>
-        <p className="text-gray-600 mb-6">{error}</p>
-        <button 
-          onClick={() => navigate('/')}
-          className="bg-green-900 text-white px-6 py-3 rounded-lg font-bold hover:bg-green-800 transition-colors"
-        >
-          Return Home
-        </button>
-      </div>
+      <>
+        {debugHeader}
+        <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
+          <AlertCircle className="w-16 h-16 text-red-600 mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Something went wrong</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button 
+            onClick={() => navigate('/')}
+            className="bg-green-900 text-white px-6 py-3 rounded-lg font-bold hover:bg-green-800 transition-colors"
+          >
+            Return Home
+          </button>
+        </div>
+      </>
     );
   }
 
   if (booking) {
     return (
       <main className="max-w-7xl mx-auto px-4 py-8">
+         {debugHeader}
          <SuccessView booking={booking} onReset={() => navigate('/')} language={language} />
       </main>
     );
   }
 
-  return null;
+  return <div>{debugHeader}</div>;
 };
 
 export default Success;
