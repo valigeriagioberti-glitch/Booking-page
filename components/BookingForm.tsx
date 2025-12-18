@@ -18,9 +18,11 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
   
   const generateTimeOptions = () => {
     const options = [];
-    for (let h = 8; h <= 23; h++) {
+    // Limit range from 08:30 to 21:30
+    for (let h = 8; h <= 21; h++) {
       for (let m = 0; m < 60; m += 30) {
         if (h === 8 && m === 0) continue; // Start at 8:30
+        if (h === 21 && m > 30) continue; // End at 21:30
         const timeStr = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
         options.push(timeStr);
       }
@@ -86,7 +88,20 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
     }));
   };
 
-  const isFormValid = totalBags > 0 && billableDays > 0 && formData.customerName.trim() !== '' && formData.customerEmail.trim() !== '' && formData.customerPhone.trim() !== '';
+  const isValidEmail = (email: string) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
+  const isFormValid = useMemo(() => {
+    return (
+      totalBags > 0 && 
+      billableDays > 0 && 
+      formData.customerName.trim().length >= 2 && 
+      isValidEmail(formData.customerEmail) && 
+      formData.customerPhone.trim().length >= 5
+    );
+  }, [totalBags, billableDays, formData.customerName, formData.customerEmail, formData.customerPhone]);
 
   const handlePayment = async () => {
     if (!isFormValid) return;
@@ -124,9 +139,9 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
-      <div className="lg:col-span-2 space-y-10">
+      <div className="lg:col-span-2 space-y-12">
         <section>
-          <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+          <h2 className="text-xl font-bold text-gray-900 mb-8 flex items-center">
             <span className="w-1.5 h-6 bg-green-900 rounded-full mr-3"></span>
             {t.booking.step1}
           </h2>
@@ -142,13 +157,13 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
                     qty > 0 ? 'border-green-900 bg-green-50/50 shadow-sm' : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
-                  <div className="flex-grow">
+                  <div className="flex-grow pr-6">
                     <div className="font-bold text-gray-900">{bagSizeNames[size]}</div>
-                    <div className="text-sm text-gray-500 mt-1">{rule.description}</div>
+                    <div className="text-sm text-gray-500 mt-1 leading-snug">{rule.description}</div>
                     <div className="text-green-900 font-bold mt-2 text-sm">€{rule.pricePerDay} / {t.booking.perDay}</div>
                   </div>
                   
-                  <div className="flex items-center space-x-4 bg-white rounded-xl border border-gray-200 p-1.5">
+                  <div className="flex-shrink-0 flex items-center space-x-4 bg-white rounded-xl border border-gray-200 p-1.5 h-fit self-center">
                     <button 
                       onClick={() => adjustQuantity(size, -1)}
                       className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-900 disabled:opacity-20"
@@ -172,23 +187,28 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
 
         <section>
           <div className="mb-8">
-            <h2 className="text-xl font-bold text-gray-900 flex items-center mb-4">
+            <h2 className="text-xl font-bold text-gray-900 flex items-center mb-6">
               <span className="w-1.5 h-6 bg-green-900 rounded-full mr-3"></span>
               {t.booking.step2}
             </h2>
-            <div className="flex items-start md:items-center space-x-4 bg-red-50/60 border border-red-100 p-4 rounded-2xl transition-all hover:bg-red-50">
-              <div className="flex-shrink-0 w-8 h-8 bg-white rounded-full flex items-center justify-center text-red-600 shadow-sm border border-red-50">
-                <Info className="w-4 h-4" />
+            <div className="flex items-start md:items-center space-x-4 bg-red-50 border border-red-100 p-6 rounded-2xl shadow-sm">
+              <div className="flex-shrink-0 w-10 h-10 bg-white rounded-full flex items-center justify-center text-red-600 shadow-sm border border-red-50">
+                <Info className="w-5 h-5" />
               </div>
-              <p className="text-red-700 text-sm font-bold leading-relaxed">
-                {t.booking.fridayDisclaimer}
-              </p>
+              <div>
+                <p className="text-red-700 text-sm font-black leading-tight mb-0.5 tracking-tight">
+                  Attention / Attenzione
+                </p>
+                <p className="text-red-600 text-[13px] font-bold leading-relaxed">
+                  {t.booking.fridayDisclaimer}
+                </p>
+              </div>
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8 mb-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-10 mb-12">
             {/* Drop Off Group */}
-            <div className="space-y-4 p-5 bg-gray-50/50 rounded-2xl border border-gray-100">
+            <div className="space-y-4 p-6 bg-gray-50/50 rounded-2xl border border-gray-100">
               <div className="space-y-2">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t.booking.dropOff}</label>
                 <div className="relative">
@@ -199,7 +219,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
                     min={format(new Date(), 'yyyy-MM-dd')}
                     value={formData.dropOffDate}
                     onChange={handleInputChange}
-                    className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-900/10 focus:border-green-900 text-sm"
+                    className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-900/10 focus:border-green-900 text-sm font-medium"
                   />
                 </div>
               </div>
@@ -211,7 +231,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
                     name="dropOffTime"
                     value={formData.dropOffTime}
                     onChange={handleInputChange}
-                    className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-900/10 focus:border-green-900 text-sm appearance-none bg-white"
+                    className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-900/10 focus:border-green-900 text-sm appearance-none bg-white font-medium"
                   >
                     {timeOptions.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
@@ -220,7 +240,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
             </div>
 
             {/* Pick Up Group */}
-            <div className="space-y-4 p-5 bg-gray-50/50 rounded-2xl border border-gray-100">
+            <div className="space-y-4 p-6 bg-gray-50/50 rounded-2xl border border-gray-100">
               <div className="space-y-2">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t.booking.pickUp}</label>
                 <div className="relative">
@@ -231,7 +251,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
                     min={formData.dropOffDate}
                     value={formData.pickUpDate}
                     onChange={handleInputChange}
-                    className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-900/10 focus:border-green-900 text-sm"
+                    className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-900/10 focus:border-green-900 text-sm font-medium"
                   />
                 </div>
               </div>
@@ -243,7 +263,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
                     name="pickUpTime"
                     value={formData.pickUpTime}
                     onChange={handleInputChange}
-                    className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-900/10 focus:border-green-900 text-sm appearance-none bg-white"
+                    className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-900/10 focus:border-green-900 text-sm appearance-none bg-white font-medium"
                   >
                     {timeOptions.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
@@ -252,7 +272,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-10 border-t border-gray-100">
             <div className="md:col-span-2 space-y-2">
               <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t.booking.fullName}</label>
               <div className="relative">
@@ -264,7 +284,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
                   required
                   value={formData.customerName}
                   onChange={handleInputChange}
-                  className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-900/10 focus:border-green-900 text-sm"
+                  className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-900/10 focus:border-green-900 text-sm font-medium"
                 />
               </div>
             </div>
@@ -279,9 +299,16 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
                   required
                   value={formData.customerEmail}
                   onChange={handleInputChange}
-                  className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-900/10 focus:border-green-900 text-sm"
+                  className={`w-full pl-12 pr-4 py-4 rounded-xl border transition-colors focus:outline-none focus:ring-2 focus:ring-green-900/10 text-sm font-medium ${
+                    formData.customerEmail.length > 0 && !isValidEmail(formData.customerEmail) 
+                    ? 'border-red-300 focus:border-red-500' 
+                    : 'border-gray-200 focus:border-green-900'
+                  }`}
                 />
               </div>
+              {formData.customerEmail.length > 0 && !isValidEmail(formData.customerEmail) && (
+                <p className="text-[10px] text-red-500 font-bold uppercase tracking-wider pl-1">Please enter a valid email address</p>
+              )}
             </div>
             <div className="space-y-2">
               <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t.booking.phone}</label>
@@ -294,7 +321,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
                   required
                   value={formData.customerPhone}
                   onChange={handleInputChange}
-                  className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-900/10 focus:border-green-900 text-sm"
+                  className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-900/10 focus:border-green-900 text-sm font-medium"
                 />
               </div>
             </div>

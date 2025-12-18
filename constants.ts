@@ -5,17 +5,17 @@ export const PRICING_RULES: Record<BagSize, PricingRule> = {
   [BagSize.SMALL]: {
     size: BagSize.SMALL,
     pricePerDay: 5,
-    description: 'Up to 10kg (Hand luggage style)'
+    description: 'Small suitcase or backpack. Max height: 55cm / 20 inches.'
   },
   [BagSize.MEDIUM]: {
     size: BagSize.MEDIUM,
     pricePerDay: 6,
-    description: '10kg - 23kg (Standard suitcase)'
+    description: 'A medium suitcase. Max height: 70cm / 27 inches.'
   },
   [BagSize.LARGE]: {
     size: BagSize.LARGE,
     pricePerDay: 7,
-    description: 'Over 23kg (Large or oversized)'
+    description: 'Anything larger than 70cm / 27 inches.'
   }
 };
 
