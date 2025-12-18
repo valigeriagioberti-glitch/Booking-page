@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { CheckCircle, ArrowLeft, Printer, FileDown, MapPin, Calendar, Briefcase, User, Mail, Clock, Phone, ExternalLink } from 'lucide-react';
+import { CheckCircle, ArrowLeft, Printer, FileDown, MapPin, Calendar, User, Mail, Clock, Phone } from 'lucide-react';
 import { BookingResult, BagSize, Language } from '../types';
 import { format } from 'date-fns';
 import { parseISO } from 'date-fns/parseISO';
@@ -39,7 +39,6 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
 
   return (
     <div className="max-w-3xl mx-auto space-y-10 animate-fade-in mb-24 md:mb-0">
-      {/* Screen Only Confirmation Status */}
       <div className="text-center print:hidden">
         <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-6">
           <CheckCircle className="w-10 h-10 text-green-900" />
@@ -50,7 +49,6 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
         </p>
       </div>
 
-      {/* Visual Representation of the Receipt (Screen Only) */}
       <div id="receipt-card" className="bg-white rounded-[2rem] border border-gray-100 shadow-2xl overflow-hidden print:hidden">
         <div className="bg-green-900 p-8 text-white flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-center space-x-3">
@@ -102,16 +100,19 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
                 <Calendar className="w-3 h-3 mr-1.5 text-green-900" /> {t.success.schedule}
               </h4>
               <div className="space-y-2">
-                <div className="flex items-center text-xs">
-                  <span className="w-16 text-gray-400 font-bold uppercase text-[8px]">{t.booking.from}</span>
-                  <span className="font-bold text-gray-900">{format(parseISO(result.dropOffDate), 'EEEE, MMM d, yyyy', { locale: dateLocale })}</span>
+                <div className="flex flex-col text-xs">
+                  <span className="text-gray-400 font-bold uppercase text-[8px] mb-0.5">{t.booking.from}</span>
+                  <span className="font-bold text-gray-900">
+                    {format(parseISO(result.dropOffDate), 'EEEE, MMM d, yyyy', { locale: dateLocale })} @ {result.dropOffTime}
+                  </span>
                 </div>
-                <div className="flex items-center text-xs">
-                  <span className="w-16 text-gray-400 font-bold uppercase text-[8px]">{t.success.until}</span>
-                  <span className="font-bold text-gray-900">{format(parseISO(result.pickUpDate), 'EEEE, MMM d, yyyy', { locale: dateLocale })}</span>
+                <div className="flex flex-col text-xs pt-1">
+                  <span className="text-gray-400 font-bold uppercase text-[8px] mb-0.5">{t.success.until}</span>
+                  <span className="font-bold text-gray-900">
+                    {format(parseISO(result.pickUpDate), 'EEEE, MMM d, yyyy', { locale: dateLocale })} @ {result.pickUpTime}
+                  </span>
                 </div>
-                <div className="flex items-center text-xs pt-1">
-                  <span className="w-16"></span>
+                <div className="flex items-center text-xs pt-2">
                   <span className="bg-green-50 text-green-900 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider border border-green-100">
                     {result.billableDays} {result.billableDays === 1 ? t.booking.day : t.booking.days}
                   </span>
@@ -178,7 +179,6 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
         </div>
       </div>
 
-      {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-4 pt-4">
         <a 
           href={printUrl}

@@ -24,7 +24,9 @@ export default async function handler(req: any, res: any) {
       const booking = {
         quantities,
         dropOffDate: metadata.dropOffDate,
+        dropOffTime: metadata.dropOffTime,
         pickUpDate: metadata.pickUpDate,
+        pickUpTime: metadata.pickUpTime,
         customerName: metadata.customerName,
         customerEmail: session.customer_details?.email,
         customerPhone: metadata.customerPhone,

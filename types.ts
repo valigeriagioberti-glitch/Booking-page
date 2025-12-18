@@ -10,7 +10,9 @@ export type Language = 'en' | 'it';
 export interface BookingData {
   quantities: Record<BagSize, number>;
   dropOffDate: string;
+  dropOffTime: string;
   pickUpDate: string;
+  pickUpTime: string;
   customerName: string;
   customerEmail: string;
   customerPhone: string;

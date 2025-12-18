@@ -22,7 +22,9 @@ export default async function handler(req: any, res: any) {
   const { 
     quantities, 
     dropOffDate, 
+    dropOffTime,
     pickUpDate, 
+    pickUpTime,
     customerName, 
     customerEmail, 
     customerPhone 
@@ -63,14 +65,14 @@ export default async function handler(req: any, res: any) {
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      customer_email: customerEmail, // Pass to Stripe
+      customer_email: customerEmail,
       line_items: [
         {
           price_data: {
             currency: 'eur',
             product_data: {
               name: `Luggage Storage - ${billableDays} Day(s)`,
-              description: `Storage for ${bagDetails.join(', ')} from ${dropOffDate} to ${pickUpDate}`,
+              description: `Storage for ${bagDetails.join(', ')} from ${dropOffDate} ${dropOffTime} to ${pickUpDate} ${pickUpTime}`,
             },
             unit_amount: totalInCents,
           },
@@ -84,10 +86,12 @@ export default async function handler(req: any, res: any) {
         customerName,
         customerPhone,
         dropOffDate,
+        dropOffTime,
         pickUpDate,
+        pickUpTime,
         quantities: JSON.stringify(quantities),
         billableDays: billableDays.toString(),
-        siteUrl // For webhook emails
+        siteUrl
       },
     });
 

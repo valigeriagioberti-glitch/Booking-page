@@ -48,33 +48,30 @@ export default async function handler(req: any, res: any) {
     const customerEmail = session.customer_details?.email || '';
     const customerPhone = metadata.customerPhone || '';
     const dropOffDate = metadata.dropOffDate || new Date().toISOString();
+    const dropOffTime = metadata.dropOffTime || '09:00';
     const pickUpDate = metadata.pickUpDate || new Date().toISOString();
+    const pickUpTime = metadata.pickUpTime || '18:00';
 
-    // Create PDF
     const pdfDoc = await PDFDocument.create();
-    const page = pdfDoc.addPage([595.28, 841.89]); // A4
+    const page = pdfDoc.addPage([595.28, 841.89]); 
     const { width, height } = page.getSize();
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
     const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
     
-    // Brand Colors
     const primaryGreen = rgb(6/255, 78/255, 59/255);
     const textGray = rgb(107/255, 114/255, 128/255);
     const borderGray = rgb(229/255, 231/255, 235/255);
     const lightGray = rgb(249/255, 250/255, 251/255);
 
-    // Header
     page.drawRectangle({ x: 0, y: height - 100, width, height: 100, color: primaryGreen });
     page.drawText('LUGGAGE DEPOSIT ROME', { x: 40, y: height - 55, size: 18, font: fontBold, color: rgb(1, 1, 1) });
     page.drawText('BOOKING CONFIRMATION', { x: 40, y: height - 75, size: 10, font: fontBold, color: rgb(0.7, 0.9, 0.8) });
 
-    // Reservation ID
     page.drawText('RESERVATION ID', { x: width - 210, y: height - 55, size: 8, font: fontBold, color: rgb(0.7, 0.9, 0.8) });
     page.drawText(session.id.substring(0, 24), { x: width - 210, y: height - 72, size: 9, font: fontRegular, color: rgb(1, 1, 1) });
 
     let cursorY = height - 150;
 
-    // Customer Info
     page.drawText('CUSTOMER DETAILS', { x: 40, y: cursorY, size: 8, font: fontBold, color: textGray });
     cursorY -= 20;
     page.drawText(customerName, { x: 40, y: cursorY, size: 12, font: fontBold });
@@ -83,21 +80,19 @@ export default async function handler(req: any, res: any) {
 
     cursorY -= 50;
 
-    // Dates
     page.drawText('STORAGE SCHEDULE', { x: 40, y: cursorY, size: 8, font: fontBold, color: textGray });
     page.drawText('LOCATION', { x: width / 2, y: cursorY, size: 8, font: fontBold, color: textGray });
     cursorY -= 20;
-    page.drawText(`FROM: ${format(parseISO(dropOffDate), 'PPP')}`, { x: 40, y: cursorY, size: 10, font: fontBold });
+    page.drawText(`FROM: ${format(parseISO(dropOffDate), 'PPP')} @ ${dropOffTime}`, { x: 40, y: cursorY, size: 10, font: fontBold });
     page.drawText('Via Gioberti, 42', { x: width / 2, y: cursorY, size: 10, font: fontBold });
     cursorY -= 15;
-    page.drawText(`UNTIL: ${format(parseISO(pickUpDate), 'PPP')}`, { x: 40, y: cursorY, size: 10, font: fontBold });
+    page.drawText(`UNTIL: ${format(parseISO(pickUpDate), 'PPP')} @ ${pickUpTime}`, { x: 40, y: cursorY, size: 10, font: fontBold });
     page.drawText('00185 Roma RM, Italy', { x: width / 2, y: cursorY, size: 10, font: fontRegular, color: textGray });
     cursorY -= 15;
     page.drawText(`DURATION: ${billableDays} Day(s)`, { x: 40, y: cursorY, size: 9, font: fontBold, color: primaryGreen });
 
     cursorY -= 60;
 
-    // Table
     page.drawText('ITEMIZED BREAKDOWN', { x: 40, y: cursorY, size: 8, font: fontBold, color: textGray });
     cursorY -= 15;
     page.drawRectangle({ x: 40, y: cursorY - 5, width: width - 80, height: 25, color: lightGray });
@@ -132,7 +127,6 @@ export default async function handler(req: any, res: any) {
     page.drawText('TOTAL PAID', { x: width - 210, y: cursorY + 12, size: 8, font: fontBold, color: rgb(1, 1, 1) });
     page.drawText(`€${totalPrice.toFixed(2)}`, { x: width - 210, y: cursorY - 5, size: 18, font: fontBold, color: rgb(1, 1, 1) });
 
-    // Footer
     page.drawText('Please show this PDF at check-in. Valid only with payment confirmation.', { x: 40, y: 40, size: 8, font: fontRegular, color: textGray });
     page.drawText('luggagedepositrome.com', { x: width - 140, y: 40, size: 8, font: fontBold, color: primaryGreen });
 

@@ -1,10 +1,8 @@
 
 import React, { useState, useMemo } from 'react';
-import { Calendar, Plus, Minus, CreditCard, User, Mail, Phone, Lock, ShieldCheck } from 'lucide-react';
+import { Calendar, Plus, Minus, CreditCard, User, Mail, Phone, Clock } from 'lucide-react';
 import { differenceInDays, format, isValid, isBefore } from 'date-fns';
-// Fix missing exported member by importing from specific subpath
 import { parseISO } from 'date-fns/parseISO';
-// Fix missing exported member by importing from specific subpath
 import { startOfDay } from 'date-fns/startOfDay';
 import { BagSize, BookingData, BookingResult, Language } from '../types';
 import { PRICING_RULES } from '../constants';
@@ -18,6 +16,20 @@ interface BookingFormProps {
 export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }) => {
   const t = TRANSLATIONS[language];
   
+  const generateTimeOptions = () => {
+    const options = [];
+    for (let h = 8; h <= 23; h++) {
+      for (let m = 0; m < 60; m += 30) {
+        if (h === 8 && m === 0) continue; // Start at 8:30
+        const timeStr = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+        options.push(timeStr);
+      }
+    }
+    return options;
+  };
+
+  const timeOptions = useMemo(() => generateTimeOptions(), []);
+
   const [formData, setFormData] = useState<BookingData>({
     quantities: {
       [BagSize.SMALL]: 0,
@@ -25,7 +37,9 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
       [BagSize.LARGE]: 0,
     },
     dropOffDate: format(new Date(), 'yyyy-MM-dd'),
+    dropOffTime: '09:00',
     pickUpDate: format(new Date(), 'yyyy-MM-dd'),
+    pickUpTime: '18:00',
     customerName: '',
     customerEmail: '',
     customerPhone: '',
@@ -57,7 +71,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
 
   const totalPrice = perDaySubtotal * billableDays;
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
@@ -94,7 +108,6 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
       }
 
       const { url } = await response.json();
-      // Redirect to Stripe Checkout
       window.location.href = url;
     } catch (err) {
       console.error(err);
@@ -163,38 +176,73 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
             {t.booking.step2}
           </h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t.booking.dropOff}</label>
-              <div className="relative">
-                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                <input 
-                  type="date"
-                  name="dropOffDate"
-                  min={format(new Date(), 'yyyy-MM-dd')}
-                  value={formData.dropOffDate}
-                  onChange={handleInputChange}
-                  className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-900/10 focus:border-green-900 text-sm"
-                />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8 mb-10">
+            {/* Drop Off Group */}
+            <div className="space-y-4 p-5 bg-gray-50/50 rounded-2xl border border-gray-100">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t.booking.dropOff}</label>
+                <div className="relative">
+                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <input 
+                    type="date"
+                    name="dropOffDate"
+                    min={format(new Date(), 'yyyy-MM-dd')}
+                    value={formData.dropOffDate}
+                    onChange={handleInputChange}
+                    className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-900/10 focus:border-green-900 text-sm"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t.booking.dropOffTime}</label>
+                <div className="relative">
+                  <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <select 
+                    name="dropOffTime"
+                    value={formData.dropOffTime}
+                    onChange={handleInputChange}
+                    className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-900/10 focus:border-green-900 text-sm appearance-none bg-white"
+                  >
+                    {timeOptions.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
               </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t.booking.pickUp}</label>
-              <div className="relative">
-                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                <input 
-                  type="date"
-                  name="pickUpDate"
-                  min={formData.dropOffDate}
-                  value={formData.pickUpDate}
-                  onChange={handleInputChange}
-                  className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-900/10 focus:border-green-900 text-sm"
-                />
+
+            {/* Pick Up Group */}
+            <div className="space-y-4 p-5 bg-gray-50/50 rounded-2xl border border-gray-100">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t.booking.pickUp}</label>
+                <div className="relative">
+                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <input 
+                    type="date"
+                    name="pickUpDate"
+                    min={formData.dropOffDate}
+                    value={formData.pickUpDate}
+                    onChange={handleInputChange}
+                    className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-900/10 focus:border-green-900 text-sm"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t.booking.pickUpTime}</label>
+                <div className="relative">
+                  <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <select 
+                    name="pickUpTime"
+                    value={formData.pickUpTime}
+                    onChange={handleInputChange}
+                    className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-900/10 focus:border-green-900 text-sm appearance-none bg-white"
+                  >
+                    {timeOptions.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100">
             <div className="md:col-span-2 space-y-2">
               <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">{t.booking.fullName}</label>
               <div className="relative">
@@ -274,7 +322,10 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
               </div>
               <div className="text-xs text-gray-400 leading-relaxed italic">
                 {billableDays > 0 ? (
-                  <>{t.booking.from} {format(parseISO(formData.dropOffDate), 'MMM d')} {t.booking.to} {format(parseISO(formData.pickUpDate), 'MMM d, yyyy')}</>
+                  <div className="space-y-1">
+                    <div>{t.booking.from} {format(parseISO(formData.dropOffDate), 'MMM d')} @ {formData.dropOffTime}</div>
+                    <div>{t.booking.to} {format(parseISO(formData.pickUpDate), 'MMM d, yyyy')} @ {formData.pickUpTime}</div>
+                  </div>
                 ) : (
                   <span className="text-red-400">Invalid range</span>
                 )}
@@ -309,10 +360,6 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
               </>
             )}
           </button>
-
-          <div className="mt-6 flex items-center justify-center space-x-2 grayscale opacity-50">
-             <img src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" className="h-4" alt="Stripe" />
-          </div>
         </div>
       </div>
     </div>

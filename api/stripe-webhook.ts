@@ -32,7 +32,6 @@ const PRICING_RULES: Record<string, number> = {
   'Large': 7
 };
 
-// Helper to generate PDF Buffer for attachments
 async function generateBookingPdfBuffer(session: Stripe.Checkout.Session) {
   const metadata = session.metadata || {};
   let quantities = {};
@@ -48,7 +47,9 @@ async function generateBookingPdfBuffer(session: Stripe.Checkout.Session) {
   const customerEmail = session.customer_details?.email || '';
   const customerPhone = metadata.customerPhone || '';
   const dropOffDate = metadata.dropOffDate || new Date().toISOString();
+  const dropOffTime = metadata.dropOffTime || '09:00';
   const pickUpDate = metadata.pickUpDate || new Date().toISOString();
+  const pickUpTime = metadata.pickUpTime || '18:00';
 
   const pdfDoc = await PDFDocument.create();
   const page = pdfDoc.addPage([595.28, 841.89]); 
@@ -79,10 +80,10 @@ async function generateBookingPdfBuffer(session: Stripe.Checkout.Session) {
   page.drawText('STORAGE SCHEDULE', { x: 40, y: cursorY, size: 8, font: fontBold, color: textGray });
   page.drawText('LOCATION', { x: width / 2, y: cursorY, size: 8, font: fontBold, color: textGray });
   cursorY -= 20;
-  page.drawText(`FROM: ${format(parseISO(dropOffDate), 'PPP')}`, { x: 40, y: cursorY, size: 10, font: fontBold });
+  page.drawText(`FROM: ${format(parseISO(dropOffDate), 'PPP')} @ ${dropOffTime}`, { x: 40, y: cursorY, size: 10, font: fontBold });
   page.drawText('Via Gioberti, 42', { x: width / 2, y: cursorY, size: 10, font: fontBold });
   cursorY -= 15;
-  page.drawText(`UNTIL: ${format(parseISO(pickUpDate), 'PPP')}`, { x: 40, y: cursorY, size: 10, font: fontBold });
+  page.drawText(`UNTIL: ${format(parseISO(pickUpDate), 'PPP')} @ ${pickUpTime}`, { x: 40, y: cursorY, size: 10, font: fontBold });
   page.drawText('00185 Roma RM, Italy', { x: width / 2, y: cursorY, size: 10, font: fontRegular, color: textGray });
   cursorY -= 15;
   page.drawText(`DURATION: ${billableDays} Day(s)`, { x: 40, y: cursorY, size: 9, font: fontBold, color: primaryGreen });
@@ -121,9 +122,6 @@ async function generateBookingPdfBuffer(session: Stripe.Checkout.Session) {
   page.drawRectangle({ x: width - 220, y: cursorY - 15, width: 180, height: 45, color: primaryGreen });
   page.drawText('TOTAL PAID', { x: width - 210, y: cursorY + 12, size: 8, font: fontBold, color: rgb(1, 1, 1) });
   page.drawText(`€${totalPrice.toFixed(2)}`, { x: width - 210, y: cursorY - 5, size: 18, font: fontBold, color: rgb(1, 1, 1) });
-
-  page.drawText('Please show this PDF at check-in. Valid only with payment confirmation.', { x: 40, y: 40, size: 8, font: fontRegular, color: textGray });
-  page.drawText('luggagedepositrome.com', { x: width - 140, y: 40, size: 8, font: fontBold, color: primaryGreen });
 
   const pdfBytes = await pdfDoc.save();
   return Buffer.from(pdfBytes);
@@ -165,7 +163,9 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
   const customerEmail = session.customer_details?.email;
   const customerName = metadata.customerName || 'Customer';
   const dropOffDate = metadata.dropOffDate;
+  const dropOffTime = metadata.dropOffTime || '09:00';
   const pickUpDate = metadata.pickUpDate;
+  const pickUpTime = metadata.pickUpTime || '18:00';
   const billableDays = metadata.billableDays;
   const siteUrl = metadata.siteUrl || 'https://luggagedepositrome.com';
   const quantities = JSON.parse(metadata.quantities || '{}');
@@ -219,11 +219,11 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
             <table style="width: 100%; border-collapse: collapse;">
               <tr>
                 <td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Drop-off</td>
-                <td style="padding: 8px 0; color: #111827; font-size: 13px; text-align: right; font-weight: 600;">${dropOffDate}</td>
+                <td style="padding: 8px 0; color: #111827; font-size: 13px; text-align: right; font-weight: 600;">${dropOffDate} @ ${dropOffTime}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Pick-up</td>
-                <td style="padding: 8px 0; color: #111827; font-size: 13px; text-align: right; font-weight: 600;">${pickUpDate}</td>
+                <td style="padding: 8px 0; color: #111827; font-size: 13px; text-align: right; font-weight: 600;">${pickUpDate} @ ${pickUpTime}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Duration</td>
@@ -251,12 +251,7 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
 
           <div style="text-align: center; margin-top: 40px;">
             <a href="${pdfUrl}" style="background-color: #064e3b; color: #ffffff; padding: 18px 32px; text-decoration: none; border-radius: 14px; font-weight: 800; font-size: 15px; display: inline-block; box-shadow: 0 10px 15px -3px rgba(6, 78, 59, 0.2);">Download Confirmation PDF</a>
-            <p style="margin-top: 15px; font-size: 12px; color: #9ca3af;">A copy of your confirmation is also attached to this email.</p>
           </div>
-        </div>
-        
-        <div style="background-color: #f3f4f6; padding: 30px; text-align: center;">
-          <p style="margin: 0; font-size: 12px; color: #9ca3af; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">&copy; Luggage Deposit Rome &bull; luggagedepositrome.com</p>
         </div>
       </div>
     </div>
@@ -271,7 +266,7 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
         <p><strong>Phone:</strong> ${metadata.customerPhone}</p>
         <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 15px 0;">
         <p><strong>Ref:</strong> #${bookingRef}</p>
-        <p><strong>Dates:</strong> ${dropOffDate} to ${pickUpDate}</p>
+        <p><strong>Dates:</strong> ${dropOffDate} ${dropOffTime} to ${pickUpDate} ${pickUpTime}</p>
         <p><strong>Duration:</strong> ${billableDays} days</p>
         <p><strong>Paid:</strong> €${totalPrice.toFixed(2)}</p>
       </div>
@@ -304,8 +299,6 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
       html: ownerHtml,
       attachments,
     });
-
-    console.log(`Emails successfully sent for session ${session.id} with PDF attachment.`);
   } catch (error) {
     console.error('Error sending emails via Resend:', error);
   }
