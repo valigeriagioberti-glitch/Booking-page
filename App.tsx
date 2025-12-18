@@ -6,7 +6,6 @@ import { BookingForm } from './components/BookingForm';
 import { SuccessView } from './components/SuccessView';
 import { BookingResult, Language } from './types';
 import { TRANSLATIONS } from './translations';
-import { Lock } from 'lucide-react';
 
 const App: React.FC = () => {
   const [bookingResult, setBookingResult] = useState<BookingResult | null>(null);
@@ -14,15 +13,28 @@ const App: React.FC = () => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Check for Stripe redirect return
+  // Robust session_id detection for both standard and hash-routing URLs
   useEffect(() => {
-    const query = new URLSearchParams(window.location.search);
-    const sessionId = query.get('session_id');
+    const getSessionId = () => {
+      // 1. Check standard search params
+      const searchParams = new URLSearchParams(window.location.search);
+      let sid = searchParams.get('session_id');
+      
+      // 2. Check hash for params (e.g., /#/success?session_id=...)
+      if (!sid && window.location.hash.includes('?')) {
+        const hashQuery = window.location.hash.split('?')[1];
+        const hashParams = new URLSearchParams(hashQuery);
+        sid = hashParams.get('session_id');
+      }
+      return sid;
+    };
+
+    const sessionId = getSessionId();
 
     if (sessionId) {
       verifyStripeSession(sessionId);
     } else {
-      // Recover state from localStorage on mount ONLY if not coming back from Stripe
+      // Recover state from localStorage if not a redirect
       const savedBooking = localStorage.getItem('ldr_latest_booking');
       if (savedBooking) {
         try {
@@ -50,12 +62,15 @@ const App: React.FC = () => {
         const result: BookingResult = data.booking;
         setBookingResult(result);
         localStorage.setItem('ldr_latest_booking', JSON.stringify(result));
-        // Clean URL
-        window.history.replaceState({}, document.title, window.location.pathname);
+        
+        // Clean URL while keeping hash structure if present
+        const cleanPath = window.location.pathname + (window.location.hash.split('?')[0] || '');
+        window.history.replaceState({}, document.title, cleanPath);
       } else {
         setError('Payment was not completed. Please try again.');
       }
     } catch (err) {
+      console.error('Verification error:', err);
       setError('An error occurred while verifying your payment.');
     } finally {
       setIsVerifying(false);
@@ -68,7 +83,6 @@ const App: React.FC = () => {
   }, []);
 
   const handleBookingComplete = useCallback((result: BookingResult) => {
-    // This is now handled by the Stripe redirect and verifyStripeSession
     setBookingResult(result);
   }, []);
 
@@ -76,6 +90,8 @@ const App: React.FC = () => {
     setBookingResult(null);
     localStorage.removeItem('ldr_latest_booking');
     setError(null);
+    // Reset URL to base
+    window.history.replaceState({}, document.title, window.location.pathname + '#/');
   }, []);
 
   const t = TRANSLATIONS[language];
