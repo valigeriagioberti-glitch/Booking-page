@@ -189,6 +189,19 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
     color: #111827;
   `;
 
+  // Format dates for owner email: "18 Dec 2025"
+  const formatEmailDate = (dateStr: string) => {
+    if (!dateStr || dateStr === '—') return '—';
+    try {
+      return format(parseISO(dateStr), 'dd MMM yyyy');
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
+  const formattedDropOffDate = formatEmailDate(dropOffDate);
+  const formattedPickUpDate = formatEmailDate(pickUpDate);
+
   // Bags breakdown for both emails
   const renderBags = (isOwner: boolean) => {
     return Object.entries(quantities)
@@ -198,7 +211,7 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
           return `
             <div style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
               <span style="font-weight: 700; color: #064e3b; font-size: 14px;">${size.toUpperCase()} (Bags)</span>
-              <span style="background-color: #064e3b; color: #ffffff; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px;">${qty}</span>
+              <span style="background-color: #064e3b; color: #ffffff; width: 32px; height: 32px; border-radius: 16px; display: inline-block; line-height: 32px; text-align: center; font-weight: 900; font-size: 14px;">${qty}</span>
             </div>
           `;
         }
@@ -288,12 +301,12 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
             
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
               <tr>
-                <td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Drop-off</td>
-                <td style="padding: 8px 0; color: #111827; font-size: 14px; text-align: right; font-weight: 700;">${dropOffDate}</td>
+                <td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Drop-off time</td>
+                <td style="padding: 8px 0; color: #111827; font-size: 14px; text-align: right; font-weight: 700;">${dropOffTime}</td>
               </tr>
               <tr>
-                <td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Pick-up</td>
-                <td style="padding: 8px 0; color: #111827; font-size: 14px; text-align: right; font-weight: 700;">${pickUpDate}</td>
+                <td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Pick-up time</td>
+                <td style="padding: 8px 0; color: #111827; font-size: 14px; text-align: right; font-weight: 700;">${pickUpTime}</td>
               </tr>
               <tr>
                 <td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Total Duration</td>
@@ -301,10 +314,9 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
               </tr>
             </table>
 
-            <div style="background-color: #064e3b; border-radius: 12px; padding: 12px; color: #ffffff; text-align: center; margin-bottom: 25px;">
-              <p style="margin: 0; font-size: 11px; font-weight: 700; text-transform: uppercase; opacity: 0.8; letter-spacing: 0.05em;">Allowed Service Window</p>
-              <p style="margin: 2px 0 0 0; font-size: 16px; font-weight: 800;">08:30 – 23:00</p>
-              <p style="margin: 4px 0 0 0; font-size: 10px; font-style: italic; opacity: 0.7;">Customer arrival: ${dropOffTime} (Drop) / ${pickUpTime} (Pick)</p>
+            <div style="background-color: #064e3b; border-radius: 12px; padding: 16px; color: #ffffff; text-align: center; margin-bottom: 25px;">
+              <p style="margin: 0; font-size: 14px; font-weight: 800;">Drop-off: ${formattedDropOffDate} – ${dropOffTime}</p>
+              <p style="margin: 6px 0 0 0; font-size: 14px; font-weight: 800;">Pick-up: ${formattedPickUpDate} – ${pickUpTime}</p>
             </div>
 
             <!-- Luggage Breakdown -->
