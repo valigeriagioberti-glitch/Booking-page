@@ -1,13 +1,9 @@
 
-
 import Stripe from 'stripe';
 import { differenceInDays, isValid, isBefore } from 'date-fns';
-// Fix missing exported member by importing from specific subpath
 import { parseISO } from 'date-fns/parseISO';
-// Fix missing exported member by importing from specific subpath
 import { startOfDay } from 'date-fns/startOfDay';
 
-// Source of truth for pricing - self-contained
 const PRICING_RULES: Record<string, number> = {
   'Small': 5,
   'Medium': 6,
@@ -33,12 +29,10 @@ export default async function handler(req: any, res: any) {
   } = req.body;
 
   try {
-    // 1. Detect dynamic base URL
     const host = req.headers.host;
     const protocol = req.headers['x-forwarded-proto'] || 'https';
     const siteUrl = `${protocol}://${host}`;
 
-    // 2. Validate Input
     if (!customerEmail || !customerName || !dropOffDate || !pickUpDate) {
       return res.status(400).json({ error: 'Missing required customer information' });
     }
@@ -52,7 +46,6 @@ export default async function handler(req: any, res: any) {
     
     const billableDays = differenceInDays(end, start) + 1;
 
-    // 3. Calculate Total and Build Line Items
     let totalInCents = 0;
     const bagDetails: string[] = [];
 
@@ -68,10 +61,9 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ error: 'No bags selected for storage' });
     }
 
-    // 4. Create Session with dynamic URLs and hash routing
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      customer_email: customerEmail,
+      customer_email: customerEmail, // Pass to Stripe
       line_items: [
         {
           price_data: {
@@ -86,7 +78,6 @@ export default async function handler(req: any, res: any) {
         },
       ],
       mode: 'payment',
-      // Using the hash routing format requested
       success_url: `${siteUrl}/#/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/#/`,
       metadata: {
@@ -96,6 +87,7 @@ export default async function handler(req: any, res: any) {
         pickUpDate,
         quantities: JSON.stringify(quantities),
         billableDays: billableDays.toString(),
+        siteUrl // For webhook emails
       },
     });
 
