@@ -26,24 +26,30 @@
         @media print {
             @page {
                 size: A4;
-                margin: 1cm;
+                margin: 0;
             }
             body {
                 background: white !important;
                 color: black !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 210mm;
+                height: 297mm;
             }
             .print\:hidden {
                 display: none !important;
             }
+            .print\:block {
+                display: block !important;
+            }
             .print\:shadow-none {
-                shadow: none !important;
                 box-shadow: none !important;
             }
             .print\:border-none {
                 border: none !important;
             }
-            .print\:p-0 {
-                padding: 0 !important;
+            .print\:p-8 {
+                padding: 2rem !important;
             }
             .print\:m-0 {
                 margin: 0 !important;
@@ -55,7 +61,13 @@
             }
             #receipt-card {
                 border: 1px solid #e5e7eb !important;
-                border-radius: 0 !important;
+                border-radius: 24px !important;
+                margin: 10mm !important;
+                box-shadow: none !important;
+                overflow: hidden !important;
+            }
+            header, footer, .print-btn-container {
+                display: none !important;
             }
         }
 
