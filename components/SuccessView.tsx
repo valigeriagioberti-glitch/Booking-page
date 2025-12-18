@@ -3,9 +3,7 @@ import React from 'react';
 import { CheckCircle, ArrowLeft, Printer, FileDown, MapPin, Calendar, Briefcase, User, Mail, Clock, Phone, ExternalLink } from 'lucide-react';
 import { BookingResult, BagSize, Language } from '../types';
 import { format } from 'date-fns';
-// Fix missing exported member by importing from specific subpath
 import { parseISO } from 'date-fns/parseISO';
-// Fix missing exported members by importing from specific subpaths
 import { it as itLocale } from 'date-fns/locale/it';
 import { enGB as enLocale } from 'date-fns/locale/en-GB';
 import { LOCATION_ADDRESS, PRICING_RULES } from '../constants';
@@ -39,7 +37,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
 
   return (
     <div className="max-w-3xl mx-auto space-y-10 animate-fade-in mb-24 md:mb-0">
-      {/* Screen Only Header */}
+      {/* Screen Only Confirmation Status */}
       <div className="text-center print:hidden">
         <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-6">
           <CheckCircle className="w-10 h-10 text-green-900" />
@@ -50,9 +48,9 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
         </p>
       </div>
 
-      <div id="receipt-card" className="bg-white rounded-[2rem] border border-gray-100 shadow-2xl overflow-hidden print:shadow-none print:border print:border-gray-200">
-        {/* Unified Print Header */}
-        <div className="bg-green-900 p-8 text-white flex flex-col md:flex-row md:items-center md:justify-between gap-4 print:bg-green-900 print:text-white print:px-8 print:py-6">
+      {/* Visual Representation of the Receipt (Screen Only) */}
+      <div id="receipt-card" className="bg-white rounded-[2rem] border border-gray-100 shadow-2xl overflow-hidden print:hidden">
+        <div className="bg-green-900 p-8 text-white flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-center space-x-3">
             <div className="flex-shrink-0">
               <img 
@@ -62,7 +60,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
               />
             </div>
             <div>
-              <h3 className="text-xl font-black tracking-tight leading-none">LUGGAGE DEPOSIT ROME</h3>
+              <h3 className="text-xl font-black tracking-tight leading-none uppercase">Luggage Deposit Rome</h3>
               <p className="text-[10px] text-green-300 uppercase tracking-widest mt-1 font-bold">Booking Confirmation</p>
             </div>
           </div>
@@ -72,8 +70,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
           </div>
         </div>
         
-        <div className="p-8 md:p-10 space-y-8 print:p-8">
-          {/* Customer & Time Info */}
+        <div className="p-8 md:p-10 space-y-8">
           <div className="grid grid-cols-2 gap-8">
             <div className="space-y-3">
               <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center">
@@ -97,7 +94,6 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
             </div>
           </div>
 
-          {/* Schedule & Location */}
           <div className="grid grid-cols-2 gap-8 pt-6 border-t border-gray-50">
             <div className="space-y-3">
               <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center">
@@ -134,7 +130,6 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
             </div>
           </div>
 
-          {/* Itemized Table - Optimized for space */}
           <div className="space-y-3 pt-6 border-t border-gray-50">
             <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{t.success.itemized}</h4>
             <div className="overflow-x-auto">
@@ -170,7 +165,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
                     <td colSpan={3} className="py-1 text-right text-gray-400 font-bold uppercase text-[9px]">{t.booking.duration}:</td>
                     <td className="py-1 text-right font-bold text-gray-900">× {result.billableDays} {result.billableDays === 1 ? t.booking.day : t.booking.days}</td>
                   </tr>
-                  <tr className="border-t-2 border-green-900 print:border-green-900">
+                  <tr className="border-t-2 border-green-900">
                     <td colSpan={3} className="py-4 text-right font-black text-green-900 uppercase tracking-[0.2em] text-[10px]">{t.success.totalPaid}</td>
                     <td className="py-4 text-right text-3xl font-black text-gray-900">€{result.totalPrice.toFixed(2)}</td>
                   </tr>
@@ -179,18 +174,10 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
             </div>
           </div>
         </div>
-
-        {/* Print Only Footer */}
-        <div className="bg-gray-50 p-6 text-center border-t border-gray-100 print:block">
-          <p className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">
-            {LOCATION_ADDRESS} &bull; Rome Termini Station
-          </p>
-          <p className="text-[9px] text-gray-400 italic">Please show this PDF at check-in &bull; luggagedepositrome.com</p>
-        </div>
       </div>
 
-      {/* Action Buttons - Screen Only */}
-      <div className="flex flex-col sm:flex-row gap-4 pt-4 print:hidden print-btn-container">
+      {/* Action Buttons */}
+      <div className="flex flex-col sm:flex-row gap-4 pt-4">
         <a 
           href={pdfUrl}
           target="_blank"
@@ -210,7 +197,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
         </a>
       </div>
 
-      <div className="text-center print:hidden">
+      <div className="text-center pt-8 border-t border-gray-100">
         <button 
           onClick={onReset}
           className="inline-flex items-center space-x-2 text-gray-400 hover:text-green-900 font-bold transition-colors text-xs uppercase tracking-widest"
