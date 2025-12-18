@@ -21,9 +21,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
   const t = TRANSLATIONS[language];
   const dateLocale = language === 'it' ? itLocale : enLocale;
 
-  const handlePrint = () => {
-    window.print();
-  };
+  const pdfUrl = `/api/booking-pdf?session_id=${result.stripePaymentId}&lang=${language}`;
 
   const romeTime = result.timestamp 
     ? new Intl.DateTimeFormat(language === 'it' ? 'it-IT' : 'en-GB', {
@@ -70,7 +68,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
           </div>
           <div className="text-left md:text-right">
             <p className="text-[9px] text-green-400 uppercase tracking-widest font-black">{t.success.resId}</p>
-            <p className="text-base font-mono font-bold">{result.stripePaymentId}</p>
+            <p className="text-base font-mono font-bold">{result.stripePaymentId.substring(0, 15)}...</p>
           </div>
         </div>
         
@@ -193,20 +191,23 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
 
       {/* Action Buttons - Screen Only */}
       <div className="flex flex-col sm:flex-row gap-4 pt-4 print:hidden print-btn-container">
-        <button 
-          onClick={handlePrint}
+        <a 
+          href={pdfUrl}
+          target="_blank"
+          rel="noopener noreferrer"
           className="flex-1 bg-green-900 text-white py-4 rounded-xl font-bold flex items-center justify-center space-x-2 hover:bg-black transition-all shadow-xl group"
         >
           <Printer className="w-4 h-4 group-hover:scale-110 transition-transform" />
           <span className="text-sm uppercase tracking-widest">{t.success.print}</span>
-        </button>
-        <button 
-          onClick={handlePrint}
+        </a>
+        <a 
+          href={pdfUrl}
+          download="booking-confirmation.pdf"
           className="flex-1 bg-white text-gray-900 border-2 border-gray-900 py-4 rounded-xl font-bold flex items-center justify-center space-x-2 hover:bg-gray-50 transition-all shadow-sm group"
         >
           <FileDown className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
           <span className="text-sm uppercase tracking-widest">{t.success.download}</span>
-        </button>
+        </a>
       </div>
 
       <div className="text-center print:hidden">
