@@ -1,73 +1,32 @@
-/* =========================
-   BAG SIZES
-   ========================= */
 
 export enum BagSize {
-  Small = "Small",
-  Medium = "Medium",
-  Large = "Large",
+  SMALL = 'Small',
+  MEDIUM = 'Medium',
+  LARGE = 'Large'
 }
 
-/* =========================
-   PAYMENT STATUS
-   ========================= */
+export type Language = 'en' | 'it';
 
-export enum PaymentStatus {
-  Pending = "pending",
-  Processing = "processing",
-  Paid = "paid",
-  Failed = "failed",
+export interface BookingData {
+  quantities: Record<BagSize, number>;
+  dropOffDate: string;
+  pickUpDate: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
 }
 
-/* =========================
-   BAG QUANTITIES
-   ========================= */
-
-export type BagQuantities = {
-  [key in BagSize]: number;
-};
-
-/* =========================
-   BOOKING DETAILS (SINGLE SOURCE)
-   ========================= */
-
-export interface BookingDetails {
-  /** Internal UUID / reference */
-  id: string;
-
-  /** Human-readable reference (LDR-YYYYMMDD-XXXX) */
-  bookingRef: string;
-
-  /** Dates */
-  dropoffDate: string; // YYYY-MM-DD
-  pickupDate: string;  // YYYY-MM-DD
-  days: number;
-
-  /** Bags */
-  bagQuantities: BagQuantities;
-
-  /** Pricing */
-  total: number;
-
-  /** Customer info (optional for now) */
-  customerName?: string;
-  customerEmail?: string;
-  customerPhone?: string;
-
-  /** Payment */
-  paymentStatus?: PaymentStatus;
-  stripePaymentId?: string;
-
-  /** Metadata */
-  timestamp?: string; // ISO string
-}
-
-/* =========================
-   PRICE CONFIG
-   ========================= */
-
-export interface PriceConfig {
+export interface PricingRule {
   size: BagSize;
   pricePerDay: number;
   description: string;
+}
+
+export interface BookingResult extends BookingData {
+  billableDays: number;
+  perDaySubtotal: number;
+  totalPrice: number;
+  stripePaymentId: string;
+  status: 'pending' | 'success' | 'failed';
+  timestamp?: string;
 }

@@ -1,0 +1,135 @@
+
+import { Language } from './types';
+
+export const TRANSLATIONS: Record<Language, any> = {
+  en: {
+    header: {
+      storage: 'Storage',
+      booking: 'booking',
+      returnHome: 'Return to Home'
+    },
+    booking: {
+      title: 'Secure your luggage in Rome',
+      subtitle: 'Book online now to reserve your spot and skip the line.',
+      step1: '1. Select your luggage',
+      step2: '2. Storage dates & contact',
+      small: 'Small',
+      medium: 'Medium',
+      large: 'Large',
+      perDay: 'day',
+      dropOff: 'Drop-off',
+      pickUp: 'Pick-up',
+      fullName: 'Full Name (Obligatory)',
+      email: 'Email (Obligatory)',
+      phone: 'Phone Number (Obligatory)',
+      summary: 'Booking Summary',
+      subtotalDay: 'Subtotal / Day',
+      duration: 'Duration',
+      days: 'Days',
+      day: 'Day',
+      from: 'From',
+      to: 'to',
+      totalDue: 'Total Due',
+      payButton: 'Pay & Reserve',
+      fillDetails: 'Please fill in all contact details',
+      secureProcessing: 'Secure processing • Instant Confirmation'
+    },
+    success: {
+      confirmed: 'Booking Confirmed ✅',
+      subtitle: 'Your luggage storage reservation is confirmed. We\'ve sent a copy of your receipt to',
+      resId: 'Reservation ID',
+      customerDetails: 'Customer Details',
+      bookedOn: 'Booked on (Rome Time)',
+      schedule: 'Storage Schedule',
+      until: 'Until',
+      storageDays: 'Storage Days',
+      dropOffPoint: 'Drop-off Point',
+      receptionInfo: 'Show this receipt at the reception when you arrive.',
+      itemized: 'Itemized Breakdown',
+      description: 'Description',
+      qty: 'Qty',
+      priceDay: 'Price/Day',
+      subtotalDaily: 'Daily Subtotal:',
+      totalPaid: 'Total Paid:',
+      bagStorage: 'Bag Storage',
+      thankYou: 'Thank you for choosing Luggage Deposit Rome',
+      visitUs: 'Visit us at luggagedepositrome.com for more info',
+      print: 'Print Receipt',
+      download: 'Download PDF',
+      anotherBooking: 'Make another booking',
+      confirmationEmail: 'A confirmation email has been sent to'
+    },
+    footer: {
+      description: 'Secure, monitored, and affordable luggage storage in the heart of Rome. The smart way to travel hands-free.',
+      information: 'Information',
+      findUsMaps: 'Find us on google maps',
+      contact: 'Contact',
+      secureSolutions: 'Secure Storage Solutions'
+    }
+  },
+  it: {
+    header: {
+      storage: 'Prenotazione',
+      booking: 'deposito',
+      returnHome: 'Torna alla Home'
+    },
+    booking: {
+      title: 'Proteggi i tuoi bagagli a Roma',
+      subtitle: 'Prenota online ora per assicurarti il posto e saltare la fila.',
+      step1: '1. Seleziona i tuoi bagagli',
+      step2: '2. Date di deposito e contatto',
+      small: 'Piccolo',
+      medium: 'Medio',
+      large: 'Grande',
+      perDay: 'giorno',
+      dropOff: 'Ritiro (Drop-off)',
+      pickUp: 'Consegna (Pick-up)',
+      fullName: 'Nome Completo (Obbligatorio)',
+      email: 'Email (Obbligatorio)',
+      phone: 'Numero di Telefono (Obbligatorio)',
+      summary: 'Riepilogo Prenotazione',
+      subtotalDay: 'Subtotale / Giorno',
+      duration: 'Durata',
+      days: 'Giorni',
+      day: 'Giorno',
+      from: 'Dal',
+      to: 'al',
+      totalDue: 'Totale Dovuto',
+      payButton: 'Paga e Prenota',
+      fillDetails: 'Si prega di inserire tutti i dati di contatto',
+      secureProcessing: 'Elaborazione sicura • Conferma Istantanea'
+    },
+    success: {
+      confirmed: 'Prenotazione Confermata ✅',
+      subtitle: 'La tua prenotazione per il deposito bagagli è confermata. Abbiamo inviato una copia della ricevuta a',
+      resId: 'ID Prenotazione',
+      customerDetails: 'Dettagli Cliente',
+      bookedOn: 'Prenotato il (Ora di Roma)',
+      schedule: 'Programma Deposito',
+      until: 'Fino al',
+      storageDays: 'Giorni di Deposito',
+      dropOffPoint: 'Punto di Consegna',
+      receptionInfo: 'Mostra questa ricevuta alla reception quando arrivi.',
+      itemized: 'Dettaglio Articoli',
+      description: 'Descrizione',
+      qty: 'Qtà',
+      priceDay: 'Prezzo/Giorno',
+      subtotalDaily: 'Subtotale Giornaliero:',
+      totalPaid: 'Totale Pagato:',
+      bagStorage: 'Deposito Bagaglio',
+      thankYou: 'Grazie per aver scelto Luggage Deposit Rome',
+      visitUs: 'Visitaci su luggagedepositrome.com per maggiori info',
+      print: 'Stampa Ricevuta',
+      download: 'Scarica PDF',
+      anotherBooking: 'Effettua un\'altra prenotazione',
+      confirmationEmail: 'Un\'email di conferma è stata inviata a'
+    },
+    footer: {
+      description: 'Deposito bagagli sicuro, monitorato e conveniente nel cuore di Roma. Il modo intelligente di viaggiare a mani libere.',
+      information: 'Informazioni',
+      findUsMaps: 'Trovaci su Google Maps',
+      contact: 'Contatto',
+      secureSolutions: 'Soluzioni di Deposito Sicure'
+    }
+  }
+};
