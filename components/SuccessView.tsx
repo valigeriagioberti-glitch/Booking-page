@@ -19,7 +19,9 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
   const t = TRANSLATIONS[language];
   const dateLocale = language === 'it' ? itLocale : enLocale;
 
-  const pdfUrl = `/api/booking-pdf?session_id=${result.stripePaymentId}&lang=${language}`;
+  const basePdfUrl = `/api/booking-pdf?session_id=${result.stripePaymentId}&lang=${language}`;
+  const printUrl = `${basePdfUrl}&mode=print`;
+  const downloadUrl = `${basePdfUrl}&mode=download`;
 
   const romeTime = result.timestamp 
     ? new Intl.DateTimeFormat(language === 'it' ? 'it-IT' : 'en-GB', {
@@ -179,7 +181,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-4 pt-4">
         <a 
-          href={pdfUrl}
+          href={printUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="flex-1 bg-green-900 text-white py-4 rounded-xl font-bold flex items-center justify-center space-x-2 hover:bg-black transition-all shadow-xl group"
@@ -188,8 +190,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
           <span className="text-sm uppercase tracking-widest">{t.success.print}</span>
         </a>
         <a 
-          href={pdfUrl}
-          download="booking-confirmation.pdf"
+          href={downloadUrl}
           className="flex-1 bg-white text-gray-900 border-2 border-gray-900 py-4 rounded-xl font-bold flex items-center justify-center space-x-2 hover:bg-gray-50 transition-all shadow-sm group"
         >
           <FileDown className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />

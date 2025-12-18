@@ -15,7 +15,7 @@ const PRICING_RULES: Record<string, number> = {
 };
 
 export default async function handler(req: any, res: any) {
-  const { session_id } = req.query;
+  const { session_id, mode = 'download' } = req.query;
 
   if (!session_id) {
     res.setHeader('Content-Type', 'text/plain');
@@ -138,9 +138,11 @@ export default async function handler(req: any, res: any) {
 
     const pdfBytes = await pdfDoc.save();
 
+    const disposition = mode === 'print' ? 'inline' : 'attachment';
+
     res.writeHead(200, {
       'Content-Type': 'application/pdf',
-      'Content-Disposition': 'attachment; filename="booking-confirmation.pdf"',
+      'Content-Disposition': `${disposition}; filename="booking-confirmation.pdf"`,
       'Content-Length': pdfBytes.length,
       'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
       'Pragma': 'no-cache',
@@ -148,13 +150,11 @@ export default async function handler(req: any, res: any) {
       'X-Content-Type-Options': 'nosniff'
     });
     
-    // Fix: Pass Uint8Array directly to res.end as it is supported in standard Node.js/Serverless environments
-    // and avoids the "Cannot find name 'Buffer'" error when Node.js type definitions are missing.
     res.end(pdfBytes);
 
   } catch (err: any) {
     console.error('PDF Error:', err);
     res.setHeader('Content-Type', 'text/plain');
-    res.status(500).end('Failed to generate PDF. Please try again or contact support. Details: ' + err.message);
+    res.status(500).end('Failed to generate PDF. Details: ' + err.message);
   }
 }
