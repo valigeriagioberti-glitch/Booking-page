@@ -137,6 +137,12 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
     [BagSize.LARGE]: t.booking.large,
   };
 
+  const bagSizeDescriptions: Record<BagSize, string> = {
+    [BagSize.SMALL]: t.booking.smallDesc,
+    [BagSize.MEDIUM]: t.booking.mediumDesc,
+    [BagSize.LARGE]: t.booking.largeDesc,
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
       <div className="lg:col-span-2 space-y-12">
@@ -157,9 +163,9 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
                     qty > 0 ? 'border-green-900 bg-green-50/50 shadow-sm' : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
-                  <div className="flex-grow pr-6">
+                  <div className="flex-grow pr-8">
                     <div className="font-bold text-gray-900">{bagSizeNames[size]}</div>
-                    <div className="text-sm text-gray-500 mt-1 leading-snug">{rule.description}</div>
+                    <div className="text-sm text-gray-500 mt-1 leading-snug">{bagSizeDescriptions[size]}</div>
                     <div className="text-green-900 font-bold mt-2 text-sm">€{rule.pricePerDay} / {t.booking.perDay}</div>
                   </div>
                   
@@ -197,7 +203,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
               </div>
               <div>
                 <p className="text-red-700 text-sm font-black leading-tight mb-0.5 tracking-tight">
-                  Attention / Attenzione
+                  {t.booking.attentionLabel}
                 </p>
                 <p className="text-red-600 text-[13px] font-bold leading-relaxed">
                   {t.booking.fridayDisclaimer}
