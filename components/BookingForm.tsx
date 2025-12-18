@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { Calendar, Plus, Minus, CreditCard, User, Mail, Phone, Clock } from 'lucide-react';
+import { Calendar, Plus, Minus, CreditCard, User, Mail, Phone, Clock, Info } from 'lucide-react';
 import { differenceInDays, format, isValid, isBefore } from 'date-fns';
 import { parseISO } from 'date-fns/parseISO';
 import { startOfDay } from 'date-fns/startOfDay';
@@ -171,10 +171,20 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
         </section>
 
         <section>
-          <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-            <span className="w-1.5 h-6 bg-green-900 rounded-full mr-3"></span>
-            {t.booking.step2}
-          </h2>
+          <div className="mb-8">
+            <h2 className="text-xl font-bold text-gray-900 flex items-center mb-4">
+              <span className="w-1.5 h-6 bg-green-900 rounded-full mr-3"></span>
+              {t.booking.step2}
+            </h2>
+            <div className="flex items-start md:items-center space-x-4 bg-red-50/60 border border-red-100 p-4 rounded-2xl transition-all hover:bg-red-50">
+              <div className="flex-shrink-0 w-8 h-8 bg-white rounded-full flex items-center justify-center text-red-600 shadow-sm border border-red-50">
+                <Info className="w-4 h-4" />
+              </div>
+              <p className="text-red-700 text-sm font-bold leading-relaxed">
+                {t.booking.fridayDisclaimer}
+              </p>
+            </div>
+          </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8 mb-10">
             {/* Drop Off Group */}
