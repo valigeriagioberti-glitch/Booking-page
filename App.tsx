@@ -122,15 +122,6 @@ const App: React.FC = () => {
 
         {!bookingResult ? (
           <div className="animate-fade-in">
-            <div className="text-center mb-16">
-              <h1 className="text-4xl md:text-5xl font-black text-gray-900 mb-6 tracking-tight">
-                {t.booking.title}
-              </h1>
-              <p className="text-gray-500 text-lg max-w-2xl mx-auto leading-relaxed">
-                {t.booking.subtitle}
-              </p>
-            </div>
-            
             <BookingForm onComplete={handleBookingComplete} language={language} />
           </div>
         ) : (
