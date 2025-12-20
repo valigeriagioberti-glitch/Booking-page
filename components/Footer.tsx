@@ -25,8 +25,13 @@ export const Footer: React.FC<FooterProps> = ({ language }) => {
               />
             </div>
             <div className="flex flex-col">
-              <span className="font-extrabold text-lg tracking-tight text-white block leading-none">Luggage Deposit</span>
-              <span className="font-bold text-[10px] tracking-widest text-green-500 block mt-0.5 leading-none uppercase">Rome</span>
+              <span className="font-extrabold text-lg tracking-tight text-white block leading-none uppercase">LUGGAGE DEPOSIT</span>
+              <span 
+                className="font-bold text-[10px] tracking-widest block mt-0.5 leading-none uppercase"
+                style={{ color: 'rgb(220, 38, 38)' }}
+              >
+                Rome
+              </span>
             </div>
           </div>
           <p className="text-gray-400 mb-6 leading-relaxed">
