@@ -97,6 +97,7 @@ export default async function handler(req: any, res: any) {
         }
       },
       hexBackgroundColor: '#064e3b',
+      barcode: null, // Explicitly set to null to remove existing barcode/QR
       textModulesData: [
         { header: 'Booking Ref', body: bookingId.substring(0, 16), id: 'booking_id' },
         { header: 'Drop-off', body: dropOffDate || '—', id: 'drop_off' },
@@ -119,7 +120,10 @@ export default async function handler(req: any, res: any) {
 
     if (getResponse.ok) {
       // Exists -> PATCH
-      const patchResponse = await fetch(getUrl, {
+      // Add updateMask to ensure barcode field is cleared on existing objects
+      const mask = 'barcode,textModulesData,linksModuleData,cardTitle,header,subheader,hexBackgroundColor,logo,state';
+      const patchUrl = `${getUrl}?updateMask=${mask}`;
+      const patchResponse = await fetch(patchUrl, {
         method: 'PATCH',
         headers: { 
           'Authorization': `Bearer ${accessToken}`,
