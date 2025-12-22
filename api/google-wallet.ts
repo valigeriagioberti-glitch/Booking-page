@@ -94,9 +94,13 @@ export default async function handler(req: any, res: any) {
     const classId = `${ISSUER_ID}.luggage_deposit_rome_booking`;
 
     // 4. Construct the Generic Object
-    // Compute the reference to show: use the provided bookingReference or fallback to the last 8 chars of bookingId
     const refToShow = bookingReference || (bookingId.length >= 8 ? bookingId.substring(bookingId.length - 8).toUpperCase() : bookingId.toUpperCase());
     
+    // Absolute URL for the redirect bridge to ensure QR code scanning works with HashRouter
+    const protocol = req.headers['x-forwarded-proto'] || 'https';
+    const host = req.headers.host;
+    const qrRedirectUrl = `${protocol}://${host}/api/r?session_id=${encodeURIComponent(bookingId)}`;
+
     const genericObject = {
       id: objectId,
       classId: classId,
@@ -111,7 +115,11 @@ export default async function handler(req: any, res: any) {
         }
       },
       hexBackgroundColor: '#064e3b',
-      barcode: null, // Explicitly set to null to remove existing barcode/QR
+      barcode: {
+        type: 'QR_CODE',
+        value: qrRedirectUrl,
+        alternateText: `Ref: ${refToShow}`
+      },
       textModulesData: [
         { header: 'Booking Ref', body: refToShow, id: 'booking_id' },
         { header: 'Drop-off', body: dropOffDate || '—', id: 'drop_off' },
@@ -134,7 +142,6 @@ export default async function handler(req: any, res: any) {
 
     if (getResponse.ok) {
       // Exists -> PATCH
-      // Add updateMask to ensure barcode field is cleared and header/subheader are updated on existing objects
       const mask = 'barcode,textModulesData,linksModuleData,cardTitle,header,subheader,hexBackgroundColor,logo,state';
       const patchUrl = `${getUrl}?updateMask=${mask}`;
       const patchResponse = await fetch(patchUrl, {
