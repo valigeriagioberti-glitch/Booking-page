@@ -101,14 +101,17 @@ export default async function handler(req: any, res: any) {
     const host = req.headers.host;
     const qrRedirectUrl = `${protocol}://${host}/api/r?session_id=${encodeURIComponent(bookingId)}`;
 
+    // Format subheader with all luggage counts
+    const luggageSubheader = `Luggage: S×${small || 0} · M×${medium || 0} · L×${large || 0}`;
+
     const genericObject = {
       id: objectId,
       classId: classId,
       genericType: 'GENERIC_TYPE_UNSPECIFIED',
       state: 'ACTIVE',
       cardTitle: { defaultValue: { language: 'en', value: 'LUGGAGE DEPOSIT ROME' } },
-      header: { defaultValue: { language: 'en', value: `${dropDateFormatted} • ${pickDateFormatted} • ${bagsSummary}` } },
-      subheader: { defaultValue: { language: 'en', value: `Ref: ${refToShow}` } },
+      header: { defaultValue: { language: 'en', value: `${dropDateFormatted} → ${pickDateFormatted}` } },
+      subheader: { defaultValue: { language: 'en', value: luggageSubheader } },
       logo: {
         sourceUri: {
           uri: 'https://cdn.shopify.com/s/files/1/0753/8144/0861/files/cropped-Untitled-design-2025-09-11T094640.576_1.png?v=1765462614'
@@ -142,6 +145,7 @@ export default async function handler(req: any, res: any) {
 
     if (getResponse.ok) {
       // Exists -> PATCH
+      // Explicitly including header and subheader in updateMask to ensure they update for existing passes
       const mask = 'barcode,textModulesData,linksModuleData,cardTitle,header,subheader,hexBackgroundColor,logo,state';
       const patchUrl = `${getUrl}?updateMask=${mask}`;
       const patchResponse = await fetch(patchUrl, {
