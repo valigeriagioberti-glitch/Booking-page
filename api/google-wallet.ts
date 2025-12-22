@@ -69,12 +69,22 @@ export default async function handler(req: any, res: any) {
     // 1. Authenticate with Google
     const accessToken = await getGoogleAccessToken(SERVICE_ACCOUNT_EMAIL, PRIVATE_KEY);
 
-    // 2. Prepare Luggage Summary
+    // 2. Prepare Luggage Summary and Date Formatting
     const luggageParts = [];
     if (small > 0) luggageParts.push(`S:${small}`);
     if (medium > 0) luggageParts.push(`M:${medium}`);
     if (large > 0) luggageParts.push(`L:${large}`);
-    const bagsSummary = luggageParts.join(' ') || 'No bags selected';
+    const bagsSummary = luggageParts.join(' ') || 'No bags';
+
+    const formatDate = (dateStr: string) => {
+      if (!dateStr || dateStr === '—') return '—';
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const date = new Date(y, m - 1, d);
+      return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    };
+
+    const dropDateFormatted = formatDate(dropOffDate);
+    const pickDateFormatted = formatDate(pickUpDate);
 
     // 3. Define Object Identity
     const safeBookingId = bookingId.replace(/[^a-zA-Z0-9-_]/g, '_');
@@ -83,15 +93,15 @@ export default async function handler(req: any, res: any) {
     const classId = `${ISSUER_ID}.luggage_deposit_rome_booking`;
 
     // 4. Construct the Generic Object
-    const shortRef = bookingId.substring(bookingId.length - 8).toUpperCase();
+    const shortRef = bookingId.substring(0, 8).toUpperCase();
     const genericObject = {
       id: objectId,
       classId: classId,
       genericType: 'GENERIC_TYPE_UNSPECIFIED',
       state: 'ACTIVE',
       cardTitle: { defaultValue: { language: 'en', value: 'LUGGAGE DEPOSIT ROME' } },
-      header: { defaultValue: { language: 'en', value: `Booking Ref: ${shortRef}` } },
-      subheader: { defaultValue: { language: 'en', value: `Drop ${dropOffDate} • Pick ${pickUpDate} • ${bagsSummary}` } },
+      header: { defaultValue: { language: 'en', value: `${dropDateFormatted} • ${pickDateFormatted} • ${bagsSummary}` } },
+      subheader: { defaultValue: { language: 'en', value: `Ref: ${shortRef}` } },
       logo: {
         sourceUri: {
           uri: 'https://cdn.shopify.com/s/files/1/0753/8144/0861/files/cropped-Untitled-design-2025-09-11T094640.576_1.png?v=1765462614'
@@ -121,7 +131,7 @@ export default async function handler(req: any, res: any) {
 
     if (getResponse.ok) {
       // Exists -> PATCH
-      // Add updateMask to ensure barcode field is cleared on existing objects
+      // Add updateMask to ensure barcode field is cleared and header/subheader are updated on existing objects
       const mask = 'barcode,textModulesData,linksModuleData,cardTitle,header,subheader,hexBackgroundColor,logo,state';
       const patchUrl = `${getUrl}?updateMask=${mask}`;
       const patchResponse = await fetch(patchUrl, {
