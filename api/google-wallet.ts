@@ -1,4 +1,4 @@
-import * as jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 
 /**
  * Gets a Google OAuth2 Access Token using the Service Account credentials.
