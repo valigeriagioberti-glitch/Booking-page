@@ -40,6 +40,9 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
   const handleAddToWallet = async () => {
     setWalletLoading(true);
     
+    // Derive the friendly reference code (last 8 characters of the payment ID)
+    const bookingReference = result.stripePaymentId.substring(result.stripePaymentId.length - 8).toUpperCase();
+    
     try {
       const response = await fetch('/api/google-wallet', {
         method: 'POST',
@@ -48,6 +51,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
         },
         body: JSON.stringify({
           bookingId: result.stripePaymentId,
+          bookingReference,
           small: result.quantities[BagSize.SMALL] || 0,
           medium: result.quantities[BagSize.MEDIUM] || 0,
           large: result.quantities[BagSize.LARGE] || 0,

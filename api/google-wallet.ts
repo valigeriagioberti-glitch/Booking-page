@@ -37,6 +37,7 @@ export default async function handler(req: any, res: any) {
 
   const { 
     bookingId, 
+    bookingReference,
     small, 
     medium, 
     large, 
@@ -93,7 +94,9 @@ export default async function handler(req: any, res: any) {
     const classId = `${ISSUER_ID}.luggage_deposit_rome_booking`;
 
     // 4. Construct the Generic Object
-    const shortRef = bookingId.substring(0, 8).toUpperCase();
+    // Compute the reference to show: use the provided bookingReference or fallback to the last 8 chars of bookingId
+    const refToShow = bookingReference || (bookingId.length >= 8 ? bookingId.substring(bookingId.length - 8).toUpperCase() : bookingId.toUpperCase());
+    
     const genericObject = {
       id: objectId,
       classId: classId,
@@ -101,7 +104,7 @@ export default async function handler(req: any, res: any) {
       state: 'ACTIVE',
       cardTitle: { defaultValue: { language: 'en', value: 'LUGGAGE DEPOSIT ROME' } },
       header: { defaultValue: { language: 'en', value: `${dropDateFormatted} • ${pickDateFormatted} • ${bagsSummary}` } },
-      subheader: { defaultValue: { language: 'en', value: `Ref: ${shortRef}` } },
+      subheader: { defaultValue: { language: 'en', value: `Ref: ${refToShow}` } },
       logo: {
         sourceUri: {
           uri: 'https://cdn.shopify.com/s/files/1/0753/8144/0861/files/cropped-Untitled-design-2025-09-11T094640.576_1.png?v=1765462614'
@@ -110,7 +113,7 @@ export default async function handler(req: any, res: any) {
       hexBackgroundColor: '#064e3b',
       barcode: null, // Explicitly set to null to remove existing barcode/QR
       textModulesData: [
-        { header: 'Booking Ref', body: bookingId.substring(0, 16), id: 'booking_id' },
+        { header: 'Booking Ref', body: refToShow, id: 'booking_id' },
         { header: 'Drop-off', body: dropOffDate || '—', id: 'drop_off' },
         { header: 'Pick-up', body: pickUpDate || '—', id: 'pick_up' },
         { header: 'Luggage', body: bagsSummary, id: 'bags' }
