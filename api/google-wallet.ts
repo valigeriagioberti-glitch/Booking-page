@@ -83,14 +83,15 @@ export default async function handler(req: any, res: any) {
     const classId = `${ISSUER_ID}.luggage_deposit_rome_booking`;
 
     // 4. Construct the Generic Object
+    const shortRef = bookingId.substring(bookingId.length - 8).toUpperCase();
     const genericObject = {
       id: objectId,
       classId: classId,
       genericType: 'GENERIC_TYPE_UNSPECIFIED',
       state: 'ACTIVE',
       cardTitle: { defaultValue: { language: 'en', value: 'LUGGAGE DEPOSIT ROME' } },
-      header: { defaultValue: { language: 'en', value: 'Luggage Storage' } },
-      subheader: { defaultValue: { language: 'en', value: customerEmail || 'Guest' } },
+      header: { defaultValue: { language: 'en', value: `Booking Ref: ${shortRef}` } },
+      subheader: { defaultValue: { language: 'en', value: `Drop ${dropOffDate} • Pick ${pickUpDate} • ${bagsSummary}` } },
       logo: {
         sourceUri: {
           uri: 'https://cdn.shopify.com/s/files/1/0753/8144/0861/files/cropped-Untitled-design-2025-09-11T094640.576_1.png?v=1765462614'
