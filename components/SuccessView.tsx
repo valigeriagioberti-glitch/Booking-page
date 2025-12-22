@@ -54,7 +54,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
           dropOffDate: result.dropOffDate,
           pickUpDate: result.pickUpDate,
           customerEmail: result.customerEmail,
-          verifyUrl: `https://booking.luggagedepositrome.com/verify?bookingId=${encodeURIComponent(result.stripePaymentId)}`
+          verifyUrl: `https://booking.luggagedepositrome.com/#/verify?bookingId=${encodeURIComponent(result.stripePaymentId)}`
         }),
       });
 

@@ -1,6 +1,8 @@
+
 import React, { useEffect, useState } from 'react';
 import { CheckCircle, XCircle, User, Calendar } from 'lucide-react';
-import { BookingResult, Language } from '../types';
+// Added BagSize to imports to facilitate proper type casting
+import { BookingResult, Language, BagSize } from '../types';
 import { TRANSLATIONS } from '../translations';
 import { format } from 'date-fns';
 import { parseISO } from 'date-fns/parseISO';
@@ -91,7 +93,8 @@ export const VerifyView: React.FC<VerifyViewProps> = ({ bookingId, language }) =
             <div>
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t.verify.bags}</p>
               <div className="flex gap-4 mt-1">
-                {Object.entries(booking.quantities).map(([size, qty]) => (
+                {/* Fixed: Cast Object.entries to correctly identify qty as number instead of unknown */}
+                {(Object.entries(booking.quantities) as [BagSize, number][]).map(([size, qty]) => (
                   qty > 0 && (
                     <div key={size} className="bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
                       <span className="text-[10px] font-black text-gray-900">{size[0]}: {qty}</span>
