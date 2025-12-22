@@ -97,11 +97,6 @@ export default async function handler(req: any, res: any) {
         }
       },
       hexBackgroundColor: '#064e3b',
-      barcode: {
-        type: 'QR_CODE',
-        value: verifyUrl || bookingId,
-        alternateText: bookingId
-      },
       textModulesData: [
         { header: 'Booking Ref', body: bookingId.substring(0, 16), id: 'booking_id' },
         { header: 'Drop-off', body: dropOffDate || '—', id: 'drop_off' },
