@@ -1,5 +1,5 @@
 {
-  "name": "luggage-deposit-rome---booking",
+  "name": "safe-booking-luggage-deposit-rome",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -16,7 +16,8 @@
     "stripe": "^20.1.0",
     "pdf-lib": "^1.17.1",
     "resend": "^6.6.0",
-    "buffer": "^6.0.3"
+    "buffer": "^6.0.3",
+    "jsonwebtoken": "^9.0.3"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

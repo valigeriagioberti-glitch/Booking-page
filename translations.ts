@@ -64,7 +64,18 @@ export const TRANSLATIONS: Record<Language, any> = {
       print: 'Print Receipt',
       download: 'Download PDF',
       anotherBooking: 'Make another booking',
-      confirmationEmail: 'A confirmation email has been sent to'
+      confirmationEmail: 'A confirmation email has been sent to',
+      addToWallet: 'Add to Google Wallet'
+    },
+    verify: {
+      title: 'Booking Verification',
+      loading: 'Verifying booking details...',
+      notFound: 'Booking not found',
+      status: 'Booking Status',
+      valid: 'Valid Booking',
+      invalid: 'Invalid or Unpaid',
+      customer: 'Customer',
+      bags: 'Luggage Details'
     },
     footer: {
       description: 'Secure, monitored, and affordable luggage storage in the heart of Rome. The smart way to travel hands-free.',
@@ -136,7 +147,18 @@ export const TRANSLATIONS: Record<Language, any> = {
       print: 'Stampa Ricevuta',
       download: 'Scarica PDF',
       anotherBooking: 'Effettua un\'altra prenotazione',
-      confirmationEmail: 'Un\'email di conferma è stata inviata a'
+      confirmationEmail: 'Un\'email di conferma è stata inviata a',
+      addToWallet: 'Aggiungi a Google Wallet'
+    },
+    verify: {
+      title: 'Verifica Prenotazione',
+      loading: 'Verifica dei dettagli in corso...',
+      notFound: 'Prenotazione non trovata',
+      status: 'Stato Prenotazione',
+      valid: 'Prenotazione Valida',
+      invalid: 'Non Valida o Non Pagata',
+      customer: 'Cliente',
+      bags: 'Dettagli Bagaglio'
     },
     footer: {
       description: 'Deposito bagagli sicuro, monitorato e conveniente nel cuore di Roma. Il modo intelligente di viaggiare a mani libere.',

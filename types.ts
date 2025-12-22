@@ -32,3 +32,5 @@ export interface BookingResult extends BookingData {
   status: 'pending' | 'success' | 'failed';
   timestamp?: string;
 }
+
+export type ViewState = 'booking' | 'success' | 'verify';

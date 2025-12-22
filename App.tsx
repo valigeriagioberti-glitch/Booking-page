@@ -1,10 +1,11 @@
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { BookingForm } from './components/BookingForm';
 import { SuccessView } from './components/SuccessView';
-import { BookingResult, Language } from './types';
+import { VerifyView } from './components/VerifyView';
+import { BookingResult, Language, ViewState } from './types';
 import { TRANSLATIONS } from './translations';
 
 const App: React.FC = () => {
@@ -12,43 +13,51 @@ const App: React.FC = () => {
   const [language, setLanguage] = useState<Language>('en');
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentView, setCurrentView] = useState<ViewState>('booking');
+  const [verifyId, setVerifyId] = useState<string | null>(null);
 
-  // Robust session_id detection for both standard and hash-routing URLs
+  // Handle URL changes and initial load
   useEffect(() => {
-    const getSessionId = () => {
-      // 1. Check standard search params
+    const handleUrlChange = () => {
       const searchParams = new URLSearchParams(window.location.search);
-      let sid = searchParams.get('session_id');
+      const hashParams = new URLSearchParams(window.location.hash.includes('?') ? window.location.hash.split('?')[1] : '');
       
-      // 2. Check hash for params (e.g., /#/success?session_id=...)
-      if (!sid && window.location.hash.includes('?')) {
-        const hashQuery = window.location.hash.split('?')[1];
-        const hashParams = new URLSearchParams(hashQuery);
-        sid = hashParams.get('session_id');
+      const sessionId = searchParams.get('session_id') || hashParams.get('session_id');
+      const bid = searchParams.get('bid') || hashParams.get('bid');
+
+      if (bid) {
+        setVerifyId(bid);
+        setCurrentView('verify');
+        return;
       }
-      return sid;
-    };
 
-    const sessionId = getSessionId();
-
-    if (sessionId) {
-      verifyStripeSession(sessionId);
-    } else {
-      // Recover state from localStorage if not a redirect
-      const savedBooking = localStorage.getItem('ldr_latest_booking');
-      if (savedBooking) {
-        try {
-          setBookingResult(JSON.parse(savedBooking));
-        } catch (e) {
-          localStorage.removeItem('ldr_latest_booking');
+      if (sessionId) {
+        verifyStripeSession(sessionId);
+      } else {
+        // Recover state from localStorage if not a redirect
+        const savedBooking = localStorage.getItem('ldr_latest_booking');
+        if (savedBooking && window.location.hash.includes('success')) {
+          try {
+            setBookingResult(JSON.parse(savedBooking));
+            setCurrentView('success');
+          } catch (e) {
+            localStorage.removeItem('ldr_latest_booking');
+          }
+        } else if (!window.location.hash.includes('success')) {
+          setCurrentView('booking');
         }
       }
-    }
-    
+    };
+
+    window.addEventListener('hashchange', handleUrlChange);
+    handleUrlChange();
+
     const savedLang = localStorage.getItem('ldr_language') as Language;
     if (savedLang && (savedLang === 'en' || savedLang === 'it')) {
       setLanguage(savedLang);
     }
+
+    return () => window.removeEventListener('hashchange', handleUrlChange);
   }, []);
 
   const verifyStripeSession = async (sessionId: string) => {
@@ -62,12 +71,13 @@ const App: React.FC = () => {
         const result: BookingResult = data.booking;
         setBookingResult(result);
         localStorage.setItem('ldr_latest_booking', JSON.stringify(result));
+        setCurrentView('success');
         
-        // Clean URL while keeping hash structure if present
-        const cleanPath = window.location.pathname + (window.location.hash.split('?')[0] || '');
-        window.history.replaceState({}, document.title, cleanPath);
+        // Clean URL to success state
+        window.history.replaceState({}, document.title, window.location.pathname + '#/success');
       } else {
         setError('Payment was not completed. Please try again.');
+        setCurrentView('booking');
       }
     } catch (err) {
       console.error('Verification error:', err);
@@ -84,17 +94,17 @@ const App: React.FC = () => {
 
   const handleBookingComplete = useCallback((result: BookingResult) => {
     setBookingResult(result);
+    setCurrentView('success');
   }, []);
 
   const handleReset = useCallback(() => {
     setBookingResult(null);
+    setVerifyId(null);
     localStorage.removeItem('ldr_latest_booking');
     setError(null);
-    // Reset URL to base
+    setCurrentView('booking');
     window.history.replaceState({}, document.title, window.location.pathname + '#/');
   }, []);
-
-  const t = TRANSLATIONS[language];
 
   if (isVerifying) {
     return (
@@ -120,12 +130,18 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {!bookingResult ? (
+        {currentView === 'booking' && (
           <div className="animate-fade-in">
             <BookingForm onComplete={handleBookingComplete} language={language} />
           </div>
-        ) : (
+        )}
+
+        {currentView === 'success' && bookingResult && (
           <SuccessView result={bookingResult} onReset={handleReset} language={language} />
+        )}
+
+        {currentView === 'verify' && verifyId && (
+          <VerifyView bookingId={verifyId} language={language} />
         )}
       </main>
 
