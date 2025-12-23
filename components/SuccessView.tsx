@@ -223,20 +223,18 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
           <div className="pt-8 border-t border-gray-100">
             <div className="flex flex-col md:flex-row md:items-end gap-6 w-full">
               {/* Wallet Section */}
-              <div className="flex-1 text-center md:text-left">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 md:pl-1">Save your booking pass</p>
-                <div className="h-14 flex items-center justify-center md:justify-start">
-                  <a 
-                    href={walletUrl}
-                    className="inline-block transition-all hover:opacity-90 active:opacity-85 transform hover:scale-[1.02]"
-                  >
-                    <img 
-                      src="https://booking.luggagedepositrome.com/assets/google-wallet/add_to_google_wallet_black.png" 
-                      alt="Add to Google Wallet" 
-                      className="h-10 md:h-12 w-auto"
-                    />
-                  </a>
-                </div>
+              <div className="flex-1">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 md:pl-1 text-center md:text-left">Save your booking pass</p>
+                <a 
+                  href={walletUrl}
+                  className="flex w-full h-14 bg-black rounded-xl items-center justify-center transition-all hover:opacity-90 active:opacity-85 transform hover:scale-[1.02] shadow-sm"
+                >
+                  <img 
+                    src="https://booking.luggagedepositrome.com/assets/google-wallet/add_to_google_wallet_black.png" 
+                    alt="Add to Google Wallet" 
+                    className="h-8 md:h-10 w-auto"
+                  />
+                </a>
               </div>
 
               {/* PDF Download Section */}
