@@ -39,19 +39,19 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
   const displayRef = result.bookingRef || result.stripePaymentId.substring(result.stripePaymentId.length - 8).toUpperCase();
 
   return (
-    <div className="max-w-3xl mx-auto space-y-10 animate-fade-in mb-24 md:mb-0">
-      <div className="text-center print:hidden">
+    <div className="max-w-3xl mx-auto space-y-10 animate-fade-in mb-24 md:mb-0 w-full overflow-x-hidden">
+      <div className="text-center print:hidden px-4">
         <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-6">
           <CheckCircle className="w-10 h-10 text-green-900" />
         </div>
         <h2 className="text-3xl font-black text-gray-900 mb-2">{t.success.confirmed}</h2>
         <p className="text-gray-500 max-w-md mx-auto text-base">
-          {t.success.subtitle} <strong>{result.customerEmail}</strong>.
+          {t.success.subtitle} <strong className="break-all">{result.customerEmail}</strong>.
         </p>
       </div>
 
-      <div id="receipt-card" className="bg-white rounded-[2rem] border border-gray-100 shadow-2xl overflow-hidden print:hidden">
-        <div className="bg-green-900 p-8 text-white flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div id="receipt-card" className="bg-white rounded-[2rem] border border-gray-100 shadow-2xl overflow-hidden print:hidden w-full mx-auto max-w-full">
+        <div className="bg-green-900 p-6 sm:p-8 text-white flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-center space-x-3">
             <div className="flex-shrink-0">
               <img 
@@ -60,20 +60,20 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
                 className="h-10 w-auto object-contain brightness-0 invert"
               />
             </div>
-            <div>
-              <h3 className="text-xl font-black tracking-tight leading-none uppercase">Luggage Deposit Rome</h3>
-              <p className="text-[11px] text-green-300 uppercase tracking-widest mt-1 font-bold">Booking Confirmation</p>
+            <div className="min-w-0">
+              <h3 className="text-lg sm:text-xl font-black tracking-tight leading-none uppercase truncate">Luggage Deposit Rome</h3>
+              <p className="text-[10px] sm:text-[11px] text-green-300 uppercase tracking-widest mt-1 font-bold">Booking Confirmation</p>
             </div>
           </div>
-          <div className="text-left md:text-right min-w-[140px]">
-            <p className="text-[10px] text-green-400 uppercase tracking-widest font-black">Booking Reference</p>
-            <p className="text-2xl font-mono font-black tracking-widest uppercase">#{displayRef}</p>
+          <div className="text-left md:text-right min-w-0">
+            <p className="text-[9px] sm:text-[10px] text-green-400 uppercase tracking-widest font-black">Booking Reference</p>
+            <p className="text-xl sm:text-2xl font-mono font-black tracking-widest uppercase">#{displayRef}</p>
           </div>
         </div>
         
-        <div className="p-8 md:p-10 space-y-8">
+        <div className="p-6 sm:p-8 md:p-10 space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-3">
+            <div className="space-y-3 min-w-0">
               <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] flex items-center">
                 <User className="w-3.5 h-3.5 mr-2 text-green-900" /> {t.success.customerDetails}
               </h4>
@@ -91,7 +91,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
               <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.15em] flex items-center">
                 <Clock className="w-3.5 h-3.5 mr-2 text-green-900" /> {t.success.bookedOn}
               </h4>
-              <p className="text-base font-bold text-gray-900">{romeTime} <span className="text-xs font-normal text-gray-400 ml-1">(Rome time)</span></p>
+              <p className="text-base font-bold text-gray-900">{romeTime} <span className="text-xs font-normal text-gray-400 ml-1">(Rome)</span></p>
             </div>
           </div>
 
@@ -102,13 +102,13 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
               </h4>
               <div className="space-y-5">
                 <div className="flex items-start space-x-4">
-                  <div className="mt-1 p-2 bg-green-50 rounded-xl">
+                  <div className="mt-1 p-2 bg-green-50 rounded-xl flex-shrink-0">
                     <ArrowDownRight className="w-4 h-4 text-green-600" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-tight mb-0.5">{t.booking.from}</span>
-                    <div className="flex items-baseline space-x-2">
-                      <span className="text-base font-black text-gray-900">
+                    <div className="flex flex-wrap items-baseline gap-x-2">
+                      <span className="text-base font-black text-gray-900 whitespace-nowrap">
                         {format(parseISO(result.dropOffDate), 'MMM d, yyyy', { locale: dateLocale })}
                       </span>
                       <span className="text-sm font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded border border-green-100">
@@ -119,13 +119,13 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
                 </div>
 
                 <div className="flex items-start space-x-4">
-                  <div className="mt-1 p-2 bg-gray-50 rounded-xl">
+                  <div className="mt-1 p-2 bg-gray-50 rounded-xl flex-shrink-0">
                     <ArrowUpRight className="w-4 h-4 text-gray-600" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-tight mb-0.5">{t.success.until}</span>
-                    <div className="flex items-baseline space-x-2">
-                      <span className="text-base font-black text-gray-900">
+                    <div className="flex flex-wrap items-baseline gap-x-2">
+                      <span className="text-base font-black text-gray-900 whitespace-nowrap">
                         {format(parseISO(result.pickUpDate), 'MMM d, yyyy', { locale: dateLocale })}
                       </span>
                       <span className="text-sm font-bold text-gray-600 bg-gray-50 px-2 py-0.5 rounded border border-gray-100">
@@ -136,7 +136,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
                 </div>
                 
                 <div className="pt-1">
-                  <div className="inline-flex items-center space-x-2.5 px-4 py-2 bg-green-900 rounded-full text-white">
+                  <div className="inline-flex items-center space-x-2.5 px-4 py-2 bg-green-900 rounded-full text-white shadow-sm">
                     <Clock className="w-3.5 h-3.5" />
                     <span className="text-xs font-black uppercase tracking-widest leading-none">
                       {result.billableDays} {result.billableDays === 1 ? t.booking.day : t.booking.days}
@@ -151,7 +151,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
                 <MapPin className="w-3.5 h-3.5 mr-2 text-green-900" /> {t.success.dropOffPoint}
               </h4>
               <div className="bg-gray-50/50 p-5 rounded-2xl border border-gray-100">
-                <div className="text-[13px] font-bold text-gray-900 leading-relaxed mb-3">
+                <div className="text-[13px] font-bold text-gray-900 leading-relaxed mb-3 break-words">
                   {LOCATION_ADDRESS}
                 </div>
                 <p className="text-[11px] text-gray-400 leading-relaxed italic border-l-2 border-gray-200 pl-3">
@@ -167,11 +167,11 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
               {(Object.entries(result.quantities) as [BagSize, number][]).map(([size, qty]) => {
                 if (qty === 0) return null;
                 return (
-                  <div key={size} className="flex items-center space-x-4 bg-white border border-gray-100 p-4 rounded-2xl shadow-sm hover:border-green-200 transition-all group min-w-[140px]">
+                  <div key={size} className="flex items-center space-x-4 bg-white border border-gray-100 p-4 rounded-2xl shadow-sm hover:border-green-200 transition-all group min-w-[140px] flex-grow sm:flex-grow-0">
                     <div className="text-2xl transform group-hover:scale-110 transition-transform">🧳</div>
-                    <div>
-                      <div className="text-[11px] font-bold text-gray-400 uppercase leading-none tracking-tight">{bagSizeNames[size]}</div>
-                      <div className="text-xl font-black text-gray-900 mt-1">× {qty}</div>
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-bold text-gray-400 uppercase leading-none tracking-tight truncate">{bagSizeNames[size]}</div>
+                      <div className="text-xl font-black text-gray-900 mt-1 whitespace-nowrap">× {qty}</div>
                     </div>
                   </div>
                 );
@@ -181,52 +181,64 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
 
           <div className="space-y-3 pt-6 border-t border-gray-50">
             <h4 className="text-[11px] font-black text-gray-400 uppercase tracking-[0.15em]">{t.success.itemized}</h4>
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="text-left border-b border-gray-50">
-                    <th className="pb-3 font-bold text-gray-400 uppercase text-[10px] tracking-wider">{t.success.description}</th>
-                    <th className="pb-3 font-bold text-gray-400 uppercase text-[10px] tracking-wider text-right">{t.success.qty}</th>
-                    <th className="pb-3 font-bold text-gray-400 uppercase text-[10px] tracking-wider text-right">Price/Day</th>
-                    <th className="pb-3 font-bold text-gray-400 uppercase text-[10px] tracking-wider text-right">Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50/50">
-                  {(Object.entries(result.quantities) as [BagSize, number][]).map(([size, qty]) => {
-                    if (qty === 0) return null;
-                    const rule = PRICING_RULES[size];
-                    return (
-                      <tr key={size}>
-                        <td className="py-3 text-gray-600 font-medium">{t.success.bagStorage} ({bagSizeNames[size]})</td>
-                        <td className="py-3 text-right text-gray-500 font-bold">{qty}</td>
-                        <td className="py-3 text-right text-gray-500 font-medium">€{rule.pricePerDay.toFixed(2)}</td>
-                        <td className="py-3 text-right font-black text-gray-900">€{(qty * rule.pricePerDay).toFixed(2)}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-                <tfoot>
-                  <tr className="border-t border-gray-50">
-                    <td colSpan={3} className="pt-4 pb-1 text-right text-gray-400 font-bold uppercase text-[10px] tracking-wider">{t.success.subtotalDaily}</td>
-                    <td className="pt-4 pb-1 text-right font-black text-gray-900 text-sm">€{result.perDaySubtotal.toFixed(2)}</td>
-                  </tr>
-                  <tr>
-                    <td colSpan={3} className="py-1 text-right text-gray-400 font-bold uppercase text-[10px] tracking-wider">{t.booking.duration}:</td>
-                    <td className="py-1 text-right font-black text-gray-900 text-sm">× {result.billableDays}</td>
-                  </tr>
-                  <tr className="border-t border-green-900">
-                    <td colSpan={3} className="py-5 text-right font-black text-green-900 uppercase tracking-[0.2em] text-[11px]">{t.success.totalPaid}</td>
-                    <td className="py-5 text-right text-4xl font-black text-gray-900">€{result.totalPrice.toFixed(2)}</td>
-                  </tr>
-                </tfoot>
-              </table>
+            <div className="space-y-1">
+              {/* Desktop Table Header */}
+              <div className="hidden md:grid grid-cols-4 gap-4 px-2 pb-3 border-b border-gray-50 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                <div>{t.success.description}</div>
+                <div className="text-right">{t.success.qty}</div>
+                <div className="text-right">Price/Day</div>
+                <div className="text-right">Subtotal</div>
+              </div>
+              
+              {/* Line Items - Stacking on mobile, Grid on desktop */}
+              <div className="divide-y divide-gray-50/50">
+                {(Object.entries(result.quantities) as [BagSize, number][]).map(([size, qty]) => {
+                  if (qty === 0) return null;
+                  const rule = PRICING_RULES[size];
+                  return (
+                    <div key={size} className="py-4 md:py-3 px-2 flex flex-col md:grid md:grid-cols-4 md:gap-4 gap-2">
+                      <div className="text-xs font-bold md:font-medium text-gray-700 md:text-gray-600">
+                        {t.success.bagStorage} ({bagSizeNames[size]})
+                      </div>
+                      <div className="flex justify-between md:justify-end text-xs items-center">
+                        <span className="md:hidden text-[10px] text-gray-400 uppercase font-bold tracking-tight">{t.success.qty}:</span>
+                        <span className="text-gray-500 font-bold">{qty}</span>
+                      </div>
+                      <div className="flex justify-between md:justify-end text-xs items-center">
+                        <span className="md:hidden text-[10px] text-gray-400 uppercase font-bold tracking-tight">Price/Day:</span>
+                        <span className="text-gray-500 font-medium">€{rule.pricePerDay.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between md:justify-end text-xs items-center">
+                        <span className="md:hidden text-[10px] text-gray-400 uppercase font-bold tracking-tight">Subtotal:</span>
+                        <span className="font-black text-gray-900">€{(qty * rule.pricePerDay).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Totals Section */}
+              <div className="mt-4 space-y-2 border-t border-gray-50 pt-4 px-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t.success.subtotalDaily}</span>
+                  <span className="text-sm font-black text-gray-900">€{result.perDaySubtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t.booking.duration}:</span>
+                  <span className="text-sm font-black text-gray-900">× {result.billableDays}</span>
+                </div>
+                <div className="flex flex-col sm:flex-row justify-between items-center pt-6 pb-2 border-t-2 border-green-900 gap-2">
+                  <span className="font-black text-green-900 uppercase tracking-[0.1em] sm:tracking-[0.2em] text-[11px]">{t.success.totalPaid}</span>
+                  <span className="text-3xl sm:text-4xl font-black text-gray-900 whitespace-nowrap">€{result.totalPrice.toFixed(2)}</span>
+                </div>
+              </div>
             </div>
           </div>
 
           <div className="pt-8 border-t border-gray-100">
             <div className="flex flex-col md:flex-row md:items-end gap-6 w-full">
               {/* Wallet Section */}
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest mb-4 md:pl-1 text-center md:text-left">Save your booking pass</p>
                 <a 
                   href={walletUrl}
@@ -248,7 +260,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
               </div>
 
               {/* PDF Download Section */}
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <a 
                   href={downloadUrl}
                   className="flex w-full bg-green-900 text-white h-14 rounded-xl font-bold items-center justify-center space-x-2.5 hover:bg-black transition-all shadow-md group transform active:scale-[0.98] px-4 min-w-0"
@@ -262,10 +274,10 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
         </div>
       </div>
 
-      <div className="text-center pt-8 border-t border-gray-100 print:hidden">
+      <div className="text-center pt-8 border-t border-gray-100 print:hidden px-4">
         <button 
           onClick={onReset}
-          className="inline-flex items-center space-x-2 text-gray-400 hover:text-green-900 font-bold transition-colors text-xs uppercase tracking-widest px-4 py-2"
+          className="inline-flex items-center space-x-2 text-gray-400 hover:text-green-900 font-bold transition-colors text-xs uppercase tracking-widest px-4 py-2 bg-gray-50 rounded-full"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>{t.success.anotherBooking}</span>
