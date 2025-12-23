@@ -278,16 +278,39 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
           </div>
 
           <div style="text-align: center; margin-top: 40px;">
-            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 20px;">
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
               <tr>
-                <td align="center">
-                  <a href="${walletUrl}" style="background-color: #064e3b; color: #ffffff; padding: 18px 32px; text-decoration: none; border-radius: 14px; font-weight: 800; font-size: 15px; display: inline-block; box-shadow: 0 10px 15px -3px rgba(6, 78, 59, 0.2); width: 220px; text-align: center;">Add to Google Wallet</a>
-                  <p style="font-size: 11px; color: #9ca3af; margin-top: 10px; margin-bottom: 10px;">If the button doesn't work, open this link:<br/><a href="${walletUrl}" style="color: #064e3b; text-decoration: underline;">${walletUrl}</a></p>
+                <td align="center" style="padding: 0 10px;">
+                  <!-- Official Google Wallet Image Button -->
+                  <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="max-width: 320px; width: 100%; margin: 0 auto;">
+                    <tr>
+                      <td align="center">
+                        <a href="${walletUrl}" style="text-decoration: none; display: block; width: 100%;">
+                          <img src="https://booking.luggagedepositrome.com/google-wallet-button.png" alt="Add to Google Wallet" width="320" style="max-width: 100%; height: auto; display: block; border: 0;">
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                  
+                  <!-- Fallback Link -->
+                  <p style="font-size: 11px; line-height: 16px; color: #6b7280; margin: 12px 0 20px 0; text-align: center;">
+                    If the button doesn't work, open this link:<br/>
+                    <a href="${walletUrl}" style="color: #064e3b; text-decoration: underline; word-break: break-all;">${walletUrl}</a>
+                  </p>
+
+                  <!-- PDF Download Button Table -->
+                  <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="max-width: 280px; width: 100%; margin: 0 auto;">
+                    <tr>
+                      <td align="center" bgcolor="#064e3b" style="border-radius: 14px; padding: 18px 20px;">
+                        <a href="${pdfUrl}" style="text-decoration: none; color: #ffffff; font-weight: 800; font-size: 15px; display: block; width: 100%;">
+                          Download Confirmation PDF
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
                 </td>
               </tr>
             </table>
-            
-            <a href="${pdfUrl}" style="background-color: #064e3b; color: #ffffff; padding: 18px 32px; text-decoration: none; border-radius: 14px; font-weight: 800; font-size: 15px; display: inline-block; box-shadow: 0 10px 15px -3px rgba(6, 78, 59, 0.2); width: 220px; text-align: center;">Download Confirmation PDF</a>
           </div>
         </div>
       </div>

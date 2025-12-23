@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { CheckCircle, ArrowLeft, Printer, FileDown, MapPin, Calendar, User, Mail, Clock, Phone } from 'lucide-react';
 import { BookingResult, BagSize, Language } from '../types';
 import { format } from 'date-fns';
@@ -17,11 +17,11 @@ interface SuccessViewProps {
 export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, language }) => {
   const t = TRANSLATIONS[language];
   const dateLocale = language === 'it' ? itLocale : enLocale;
-  const [walletLoading, setWalletLoading] = useState(false);
 
   const basePdfUrl = `/api/booking-pdf?session_id=${result.stripePaymentId}&lang=${language}`;
   const printUrl = `${basePdfUrl}&mode=print`;
   const downloadUrl = `${basePdfUrl}&mode=download`;
+  const walletUrl = `/api/google-wallet?session_id=${result.stripePaymentId}`;
 
   const romeTime = result.timestamp 
     ? new Intl.DateTimeFormat(language === 'it' ? 'it-IT' : 'en-GB', {
@@ -35,56 +35,6 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
     [BagSize.SMALL]: t.booking.small,
     [BagSize.MEDIUM]: t.booking.medium,
     [BagSize.LARGE]: t.booking.large,
-  };
-
-  const handleAddToWallet = async () => {
-    setWalletLoading(true);
-    
-    // Derive the friendly reference code (last 8 characters of the payment ID)
-    const bookingReference = result.stripePaymentId.substring(result.stripePaymentId.length - 8).toUpperCase();
-    
-    try {
-      const response = await fetch('/api/google-wallet', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          bookingId: result.stripePaymentId,
-          bookingReference,
-          small: result.quantities[BagSize.SMALL] || 0,
-          medium: result.quantities[BagSize.MEDIUM] || 0,
-          large: result.quantities[BagSize.LARGE] || 0,
-          dropOffDate: result.dropOffDate,
-          pickUpDate: result.pickUpDate,
-          customerEmail: result.customerEmail,
-          verifyUrl: `https://booking.luggagedepositrome.com/#/verify?bookingId=${encodeURIComponent(result.stripePaymentId)}`
-        }),
-      });
-
-      const responseText = await response.text();
-      let responseData;
-      try {
-        responseData = JSON.parse(responseText);
-      } catch (e) {
-        throw new Error(`Invalid response from server: ${responseText.substring(0, 200)}`);
-      }
-
-      if (!response.ok) {
-        throw new Error(responseData.error || 'Failed to generate Wallet link');
-      }
-
-      if (responseData.saveUrl) {
-        window.location.href = responseData.saveUrl;
-      } else {
-        throw new Error("Google Wallet link was not generated correctly. Please try again or download the PDF.");
-      }
-    } catch (error: any) {
-      console.error('Wallet Error:', error);
-      alert(error.message || 'Could not add to Google Wallet. Please try downloading the PDF instead.');
-    } finally {
-      setWalletLoading(false);
-    }
   };
 
   return (
@@ -229,20 +179,19 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
         </div>
       </div>
 
-      <div className="flex flex-col gap-4 pt-4">
-        <button
-          onClick={handleAddToWallet}
-          disabled={walletLoading}
-          className="flex-1 bg-black text-white py-4 rounded-xl font-bold flex items-center justify-center transition-all shadow-xl disabled:opacity-50"
+      <div className="flex flex-col gap-10 pt-4 items-center print:hidden">
+        <a 
+          href={walletUrl}
+          className="block w-full max-w-[320px] transition-transform hover:scale-[1.02] active:scale-[0.98]"
         >
-          {walletLoading ? (
-             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-          ) : (
-            <span className="text-sm uppercase tracking-widest">Add to Google Wallet</span>
-          )}
-        </button>
+          <img 
+            src="https://booking.luggagedepositrome.com/google-wallet-button.png" 
+            alt="Add to Google Wallet" 
+            className="w-full h-auto"
+          />
+        </a>
 
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex flex-col sm:flex-row gap-4 w-full">
           <a 
             href={printUrl}
             target="_blank"
@@ -262,7 +211,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
         </div>
       </div>
 
-      <div className="text-center pt-8 border-t border-gray-100">
+      <div className="text-center pt-8 border-t border-gray-100 print:hidden">
         <button 
           onClick={onReset}
           className="inline-flex items-center space-x-2 text-gray-400 hover:text-green-900 font-bold transition-colors text-xs uppercase tracking-widest"
