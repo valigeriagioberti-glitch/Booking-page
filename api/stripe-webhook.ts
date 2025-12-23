@@ -174,6 +174,7 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
 
   const pdfUrl = `${siteUrl}/api/booking-pdf?session_id=${session.id}&mode=download`;
   const walletUrl = `${siteUrl}/api/google-wallet?session_id=${session.id}`;
+  const desktopRedirectUrl = `${siteUrl}/api/r?session_id=${session.id}`;
   const viewUrl = `${siteUrl}/#/success?session_id=${session.id}`;
 
   let pdfBuffer: Buffer | null = null;
@@ -189,7 +190,6 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
     color: #111827;
   `;
 
-  // Format dates for owner email: "18 Dec 2025"
   const formatEmailDate = (dateStr: string) => {
     if (!dateStr || dateStr === '—') return '—';
     try {
@@ -202,7 +202,6 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
   const formattedDropOffDate = formatEmailDate(dropOffDate);
   const formattedPickUpDate = formatEmailDate(pickUpDate);
 
-  // Bags breakdown for both emails
   const renderBags = (isOwner: boolean) => {
     return Object.entries(quantities)
       .filter(([_, qty]) => (qty as number) > 0)
@@ -225,109 +224,138 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
   };
 
   const customerHtml = `
-    <div style="${commonStyles} background-color: #f9fafb; padding: 40px 20px;">
-      <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-        <div style="background-color: #064e3b; padding: 40px 30px; text-align: center;">
-          <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.025em;">Booking Confirmed!</h1>
-          <p style="color: #a7f3d0; margin: 8px 0 0 0; text-transform: uppercase; letter-spacing: 0.1em; font-size: 12px; font-weight: 700;">Luggage Deposit Rome</p>
-        </div>
-        
-        <div style="padding: 40px 30px;">
-          <p style="font-size: 16px; margin-top: 0;">Hi <strong>${customerName}</strong>,</p>
-          <p style="color: #4b5563; font-size: 15px;">Your luggage storage has been successfully reserved. We look forward to seeing you in Rome!</p>
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media screen and (max-width: 480px) {
+          .show-on-mobile {
+            display: block !important;
+            max-height: none !important;
+            overflow: visible !important;
+            mso-hide: none !important;
+          }
+          .show-on-mobile table { display: table !important; }
+          .show-on-mobile tr { display: table-row !important; }
+          .show-on-mobile td { display: table-cell !important; }
+          .hide-on-mobile {
+            display: none !important;
+          }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f9fafb;">
+      <div style="${commonStyles} background-color: #f9fafb; padding: 40px 16px;">
+        <div style="max-width: 680px; margin: 0 auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+          <div style="background-color: #064e3b; padding: 40px 30px; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.025em;">Booking Confirmed!</h1>
+            <p style="color: #a7f3d0; margin: 8px 0 0 0; text-transform: uppercase; letter-spacing: 0.1em; font-size: 12px; font-weight: 700;">Luggage Deposit Rome</p>
+          </div>
           
-          <div style="margin: 30px 0; padding: 25px; background-color: #fdfdfd; border: 1px solid #f3f4f6; border-radius: 16px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-              <div>
-                <p style="margin: 0; font-size: 11px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Reference</p>
-                <p style="margin: 4px 0 0 0; font-family: monospace; font-size: 16px; font-weight: bold; color: #064e3b;">#${bookingRef}</p>
+          <div style="padding: 40px 16px;">
+            <p style="font-size: 16px; margin-top: 0;">Hi <strong>${customerName}</strong>,</p>
+            <p style="color: #4b5563; font-size: 15px;">Your luggage storage has been successfully reserved. We look forward to seeing you in Rome!</p>
+            
+            <div style="margin: 30px 0; padding: 25px; background-color: #fdfdfd; border: 1px solid #f3f4f6; border-radius: 16px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                <div>
+                  <p style="margin: 0; font-size: 11px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Reference</p>
+                  <p style="margin: 4px 0 0 0; font-family: monospace; font-size: 16px; font-weight: bold; color: #064e3b;">#${bookingRef}</p>
+                </div>
               </div>
+
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Drop-off</td>
+                  <td style="padding: 8px 0; color: #111827; font-size: 13px; text-align: right; font-weight: 600;">${dropOffDate} @ ${dropOffTime}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Pick-up</td>
+                  <td style="padding: 8px 0; color: #111827; font-size: 13px; text-align: right; font-weight: 600;">${pickUpDate} @ ${pickUpTime}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Duration</td>
+                  <td style="padding: 8px 0; color: #064e3b; font-size: 13px; text-align: right; font-weight: 800;">${billableDays} Day(s)</td>
+                </tr>
+              </table>
+
+              <div style="margin: 20px 0; border-top: 2px dashed #f3f4f6;"></div>
+              
+              <table style="width: 100%; border-collapse: collapse;">
+                ${renderBags(false)}
+                <tr>
+                  <td style="padding: 20px 0 0 0; color: #064e3b; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">Total Paid</td>
+                  <td style="padding: 20px 0 0 0; color: #111827; font-size: 24px; font-weight: 900; text-align: right;">€${totalPrice.toFixed(2)}</td>
+                </tr>
+              </table>
             </div>
 
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr>
-                <td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Drop-off</td>
-                <td style="padding: 8px 0; color: #111827; font-size: 13px; text-align: right; font-weight: 600;">${dropOffDate} @ ${dropOffTime}</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Pick-up</td>
-                <td style="padding: 8px 0; color: #111827; font-size: 13px; text-align: right; font-weight: 600;">${pickUpDate} @ ${pickUpTime}</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Duration</td>
-                <td style="padding: 8px 0; color: #064e3b; font-size: 13px; text-align: right; font-weight: 800;">${billableDays} Day(s)</td>
-              </tr>
-            </table>
+            <div style="margin-bottom: 30px;">
+              <h3 style="font-size: 14px; font-weight: 800; color: #111827; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Where to find us:</h3>
+              <p style="margin: 0; font-size: 15px; font-weight: 700;">Via Gioberti, 42</p>
+              <p style="margin: 2px 0 0 0; color: #6b7280; font-size: 14px;">00185 Roma RM, Italy (near Roma Termini)</p>
+              <p style="margin: 10px 0 0 0; font-size: 13px; color: #064e3b; font-weight: 600;">Open Daily: 08:30 - 21:30</p>
+            </div>
 
-            <div style="margin: 20px 0; border-top: 2px dashed #f3f4f6;"></div>
-            
-            <table style="width: 100%; border-collapse: collapse;">
-              ${renderBags(false)}
-              <tr>
-                <td style="padding: 20px 0 0 0; color: #064e3b; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">Total Paid</td>
-                <td style="padding: 20px 0 0 0; color: #111827; font-size: 24px; font-weight: 900; text-align: right;">€${totalPrice.toFixed(2)}</td>
-              </tr>
-            </table>
-          </div>
+            <div style="text-align: center; margin-top: 40px;">
+              <!-- Desktop Fallback Line -->
+              <div class="hide-on-mobile" style="margin-bottom: 20px;">
+                <p style="font-size: 13px; color: #6b7280; margin: 0 0 20px 0;">
+                  Want a Wallet pass? <a href="${desktopRedirectUrl}" style="color: #0f766e; text-decoration: underline; font-weight: 600;">Open the booking link</a> and tap "Add to Google Wallet".
+                </p>
+              </div>
 
-          <div style="margin-bottom: 30px;">
-            <h3 style="font-size: 14px; font-weight: 800; color: #111827; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Where to find us:</h3>
-            <p style="margin: 0; font-size: 15px; font-weight: 700;">Via Gioberti, 42</p>
-            <p style="margin: 2px 0 0 0; color: #6b7280; font-size: 14px;">00185 Roma RM, Italy (near Roma Termini)</p>
-            <p style="margin: 10px 0 0 0; font-size: 13px; color: #064e3b; font-weight: 600;">Open Daily: 09:00 - 19:00</p>
-          </div>
+              <!-- Mobile-only Google Wallet block -->
+              <div class="show-on-mobile" style="display:none; max-height:0; overflow:hidden; mso-hide:all;">
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                  <tr>
+                    <td align="center">
+                      <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="max-width: 320px; width: 100%; margin: 0 auto;">
+                        <tr>
+                          <td align="center">
+                            <a href="${walletUrl}" style="text-decoration: none; display: block; width: 100%;">
+                              <img src="https://booking.luggagedepositrome.com/assets/google-wallet/add_to_google_wallet_black.png" alt="Add to Google Wallet" width="320" style="max-width: 100%; height: auto; display: block; border: 0;">
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                      <p style="font-size: 12px; line-height: 16px; color: #6b7280; margin: 10px 0 18px 0; text-align: center;">
+                        If the button doesn’t work, <a href="${walletUrl}" style="color: #0f766e; text-decoration: underline; font-weight: 600;">click here</a>.
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </div>
 
-          <div style="text-align: center; margin-top: 40px;">
-            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
-              <tr>
-                <td align="center" style="padding: 0 10px;">
-                  <!-- Official Google Wallet Image Button -->
-                  <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="max-width: 320px; width: 100%; margin: 0 auto;">
-                    <tr>
-                      <td align="center">
-                        <a href="${walletUrl}" style="text-decoration: none; display: block; width: 100%;">
-                          <img src="https://booking.luggagedepositrome.com/assets/google-wallet/add_to_google_wallet_black.png" alt="Add to Google Wallet" width="320" style="max-width: 100%; height: auto; display: block; border: 0;">
-                        </a>
-                      </td>
-                    </tr>
-                  </table>
-                  
-                  <!-- Fallback Link -->
-                  <p style="font-size: 11px; line-height: 16px; color: #6b7280; margin: 12px 0 20px 0; text-align: center;">
-                    If the button doesn't work, open this link:<br/>
-                    <a href="${walletUrl}" style="color: #064e3b; text-decoration: underline; word-break: break-all;">${walletUrl}</a>
-                  </p>
-
-                  <!-- PDF Download Button Table -->
-                  <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="max-width: 280px; width: 100%; margin: 0 auto;">
-                    <tr>
-                      <td align="center" bgcolor="#064e3b" style="border-radius: 14px; padding: 18px 20px;">
-                        <a href="${pdfUrl}" style="text-decoration: none; color: #ffffff; font-weight: 800; font-size: 15px; display: block; width: 100%;">
-                          Download Confirmation PDF
-                        </a>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
-            </table>
+              <!-- PDF Download Button (Visible Everywhere) -->
+              <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="max-width: 280px; width: 100%; margin: 0 auto;">
+                <tr>
+                  <td align="center" bgcolor="#064e3b" style="border-radius: 14px; padding: 18px 20px;">
+                    <a href="${pdfUrl}" style="text-decoration: none; color: #ffffff; font-weight: 800; font-size: 15px; display: block; width: 100%;">
+                      Download Confirmation PDF
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </body>
+    </html>
   `;
 
   const ownerHtml = `
     <div style="${commonStyles} background-color: #f3f4f6; padding: 40px 20px;">
       <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-        <!-- Header -->
         <div style="background-color: #064e3b; padding: 40px 30px; text-align: center;">
           <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.025em;">New Booking Received</h1>
           <p style="color: #a7f3d0; margin: 8px 0 0 0; text-transform: uppercase; letter-spacing: 0.1em; font-size: 11px; font-weight: 700;">Payment Confirmed via Stripe</p>
         </div>
 
         <div style="padding: 40px 30px;">
-          <!-- Summary Card -->
           <div style="background-color: #f9fafb; padding: 25px; border-radius: 20px; border: 1px solid #e5e7eb; margin-bottom: 30px;">
             <h3 style="margin: 0 0 20px 0; font-size: 14px; font-weight: 800; color: #111827; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e5e7eb; padding-bottom: 10px;">Booking Summary</h3>
             
@@ -351,11 +379,9 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
               <p style="margin: 6px 0 0 0; font-size: 14px; font-weight: 800;">Pick-up: ${formattedPickUpDate} – ${pickUpTime}</p>
             </div>
 
-            <!-- Luggage Breakdown -->
             <h3 style="margin: 20px 0 15px 0; font-size: 12px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Luggage Breakdown</h3>
             ${renderBags(true)}
 
-            <!-- Payment -->
             <div style="margin-top: 25px; padding-top: 20px; border-top: 2px dashed #e5e7eb; text-align: right;">
               <p style="margin: 0; font-size: 11px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Total Paid</p>
               <p style="margin: 5px 0 0 0; font-size: 32px; font-weight: 900; color: #064e3b;">€${totalPrice.toFixed(2)}</p>
@@ -363,7 +389,6 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
             </div>
           </div>
 
-          <!-- Customer Details -->
           <div style="margin-bottom: 30px;">
             <h3 style="font-size: 12px; font-weight: 800; color: #9ca3af; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 0.05em;">Customer Details</h3>
             <div style="padding-left: 10px; border-left: 4px solid #064e3b;">
@@ -373,7 +398,6 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
             </div>
           </div>
 
-          <!-- Action Buttons -->
           <div style="display: flex; gap: 10px; margin-top: 40px; text-align: center;">
             <a href="${pdfUrl}" style="background-color: #064e3b; color: #ffffff; padding: 16px 20px; text-decoration: none; border-radius: 12px; font-weight: 800; font-size: 14px; flex: 1; display: inline-block;">Download PDF Receipt</a>
             <a href="${viewUrl}" style="background-color: #ffffff; color: #111827; border: 2px solid #111827; padding: 14px 20px; text-decoration: none; border-radius: 12px; font-weight: 800; font-size: 14px; flex: 1; display: inline-block;">View Booking</a>
@@ -384,7 +408,6 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
           </div>
         </div>
 
-        <!-- Footer -->
         <div style="background-color: #f3f4f6; padding: 30px; text-align: center; border-top: 1px solid #e5e7eb;">
           <p style="margin: 0; font-size: 12px; color: #111827; font-weight: 700;">Luggage Deposit Rome</p>
           <p style="margin: 4px 0 0 0; font-size: 11px; color: #6b7280;">Via Gioberti, 42 &bull; Roma Termini</p>

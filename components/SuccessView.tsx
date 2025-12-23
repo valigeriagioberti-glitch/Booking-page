@@ -176,38 +176,42 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
               </table>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div className="flex flex-col gap-10 pt-4 items-center print:hidden">
-        <a 
-          href={walletUrl}
-          className="block w-full max-w-[320px] transition-transform hover:scale-[1.02] active:scale-[0.98]"
-        >
-          <img 
-            src="https://booking.luggagedepositrome.com/assets/google-wallet/add_to_google_wallet_black.png" 
-            alt="Add to Google Wallet" 
-            className="w-full h-auto"
-          />
-        </a>
+          {/* Action Section inside the card */}
+          <div className="pt-8 border-t border-gray-100 flex flex-col items-center space-y-8">
+            <div className="text-center w-full">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Save your booking pass</p>
+              <a 
+                href={walletUrl}
+                className="inline-block w-full max-w-[240px] transition-all hover:opacity-90 active:opacity-85 transform hover:scale-[1.02]"
+              >
+                <img 
+                  src="https://booking.luggagedepositrome.com/assets/google-wallet/add_to_google_wallet_black.png" 
+                  alt="Add to Google Wallet" 
+                  className="w-full h-auto"
+                />
+              </a>
+            </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 w-full">
-          <a 
-            href={printUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 bg-green-900 text-white py-4 rounded-xl font-bold flex items-center justify-center space-x-2 hover:bg-black transition-all shadow-sm group"
-          >
-            <Printer className="w-4 h-4 group-hover:scale-110 transition-transform" />
-            <span className="text-sm uppercase tracking-widest">{t.success.print}</span>
-          </a>
-          <a 
-            href={downloadUrl}
-            className="flex-1 bg-white text-gray-900 border-2 border-gray-900 py-4 rounded-xl font-bold flex items-center justify-center space-x-2 hover:bg-gray-50 transition-all group"
-          >
-            <FileDown className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
-            <span className="text-sm uppercase tracking-widest">{t.success.download}</span>
-          </a>
+            <div className="flex flex-col sm:flex-row gap-4 w-full">
+              <a 
+                href={printUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 bg-green-900 text-white py-4 rounded-xl font-bold flex items-center justify-center space-x-2 hover:bg-black transition-all shadow-sm group"
+              >
+                <Printer className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                <span className="text-sm uppercase tracking-widest">{t.success.print}</span>
+              </a>
+              <a 
+                href={downloadUrl}
+                className="flex-1 bg-white text-gray-900 border-2 border-gray-900 py-4 rounded-xl font-bold flex items-center justify-center space-x-2 hover:bg-gray-50 transition-all group"
+              >
+                <FileDown className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
+                <span className="text-sm uppercase tracking-widest">{t.success.download}</span>
+              </a>
+            </div>
+          </div>
         </div>
       </div>
 
