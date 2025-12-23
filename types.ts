@@ -1,4 +1,3 @@
-
 export enum BagSize {
   SMALL = 'Small',
   MEDIUM = 'Medium',
@@ -29,6 +28,7 @@ export interface BookingResult extends BookingData {
   perDaySubtotal: number;
   totalPrice: number;
   stripePaymentId: string;
+  bookingRef: string;
   status: 'pending' | 'success' | 'failed';
   timestamp?: string;
 }

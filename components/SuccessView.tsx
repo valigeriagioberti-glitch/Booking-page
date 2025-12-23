@@ -64,23 +64,23 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
           </div>
           <div className="text-left md:text-right">
             <p className="text-[9px] text-green-400 uppercase tracking-widest font-black">{t.success.resId}</p>
-            <p className="text-base font-mono font-bold">{result.stripePaymentId.substring(0, 15)}...</p>
+            <p className="text-base font-mono font-bold tracking-widest uppercase">#{result.bookingRef}</p>
           </div>
         </div>
         
         <div className="p-8 md:p-10 space-y-8">
-          <div className="grid grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-3">
               <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center">
                 <User className="w-3 h-3 mr-1.5 text-green-900" /> {t.success.customerDetails}
               </h4>
               <div className="space-y-1">
-                <p className="text-sm font-bold text-gray-900">{result.customerName}</p>
-                <div className="text-[11px] text-gray-500 flex items-center gap-2">
-                  <Mail className="w-2.5 h-2.5" /> {result.customerEmail}
+                <p className="text-sm font-bold text-gray-900 break-words">{result.customerName}</p>
+                <div className="text-[11px] text-gray-500 flex items-center gap-2 overflow-wrap-anywhere break-all">
+                  <Mail className="w-2.5 h-2.5 flex-shrink-0" /> {result.customerEmail}
                 </div>
                 <div className="text-[11px] text-gray-500 flex items-center gap-2">
-                  <Phone className="w-2.5 h-2.5" /> {result.customerPhone}
+                  <Phone className="w-2.5 h-2.5 flex-shrink-0" /> {result.customerPhone}
                 </div>
               </div>
             </div>
@@ -88,7 +88,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
               <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center">
                 <Clock className="w-3 h-3 mr-1.5 text-green-900" /> {t.success.bookedOn}
               </h4>
-              <p className="text-sm font-bold text-gray-900">{romeTime}</p>
+              <p className="text-sm font-bold text-gray-900">{romeTime} (Rome time)</p>
             </div>
           </div>
 
@@ -227,13 +227,14 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 md:pl-1 text-center md:text-left">Save your booking pass</p>
                 <a 
                   href={walletUrl}
-                  className="flex w-full h-14 bg-black rounded-xl items-center justify-center transition-all hover:opacity-90 active:opacity-85 transform hover:scale-[1.02] shadow-sm"
+                  className="flex w-full bg-black text-white h-14 rounded-xl font-bold items-center justify-center space-x-2.5 hover:bg-gray-900 transition-all shadow-sm transform active:scale-[0.98]"
                 >
                   <img 
-                    src="https://booking.luggagedepositrome.com/assets/google-wallet/add_to_google_wallet_black.png" 
-                    alt="Add to Google Wallet" 
-                    className="h-8 md:h-10 w-auto"
+                    src="https://booking.luggagedepositrome.com/assets/google-wallet/google-wallet-icon.png" 
+                    alt="" 
+                    className="h-5 w-auto"
                   />
+                  <span className="text-sm uppercase tracking-widest">{t.success.addToWallet}</span>
                 </a>
               </div>
 
@@ -241,7 +242,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
               <div className="flex-1">
                 <a 
                   href={downloadUrl}
-                  className="flex w-full bg-green-900 text-white h-14 rounded-xl font-bold items-center justify-center space-x-2 hover:bg-black transition-all shadow-sm group"
+                  className="flex w-full bg-green-900 text-white h-14 rounded-xl font-bold items-center justify-center space-x-2 hover:bg-black transition-all shadow-sm group transform active:scale-[0.98]"
                 >
                   <FileDown className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
                   <span className="text-sm uppercase tracking-widest">{t.success.download}</span>
