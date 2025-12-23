@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, ArrowLeft, Printer, FileDown, MapPin, Calendar, User, Mail, Clock, Phone } from 'lucide-react';
+import { CheckCircle, ArrowLeft, Printer, FileDown, MapPin, Calendar, User, Mail, Clock, Phone, ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import { BookingResult, BagSize, Language } from '../types';
 import { format } from 'date-fns';
 import { parseISO } from 'date-fns/parseISO';
@@ -94,81 +94,126 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-8 pt-6 border-t border-gray-50">
-            <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-gray-50">
+            <div className="space-y-4">
               <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center">
                 <Calendar className="w-3 h-3 mr-1.5 text-green-900" /> {t.success.schedule}
               </h4>
-              <div className="space-y-2">
-                <div className="flex flex-col text-xs">
-                  <span className="text-gray-400 font-bold uppercase text-[8px] mb-0.5">{t.booking.from}</span>
-                  <span className="font-bold text-gray-900">
-                    {format(parseISO(result.dropOffDate), 'EEEE, MMM d, yyyy', { locale: dateLocale })} @ {result.dropOffTime}
-                  </span>
+              <div className="space-y-4">
+                <div className="flex items-start space-x-3">
+                  <div className="mt-1 p-1.5 bg-green-50 rounded-lg">
+                    <ArrowDownRight className="w-3.5 h-3.5 text-green-600" />
+                  </div>
+                  <div>
+                    <span className="block text-[8px] font-bold text-gray-400 uppercase tracking-tight mb-0.5">{t.booking.from}</span>
+                    <div className="flex items-baseline space-x-2">
+                      <span className="text-sm font-black text-gray-900">
+                        {format(parseISO(result.dropOffDate), 'MMM d, yyyy', { locale: dateLocale })}
+                      </span>
+                      <span className="text-xs font-bold text-green-700 bg-green-50 px-1.5 py-0.5 rounded border border-green-100">
+                        {result.dropOffTime}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex flex-col text-xs pt-1">
-                  <span className="text-gray-400 font-bold uppercase text-[8px] mb-0.5">{t.success.until}</span>
-                  <span className="font-bold text-gray-900">
-                    {format(parseISO(result.pickUpDate), 'EEEE, MMM d, yyyy', { locale: dateLocale })} @ {result.pickUpTime}
-                  </span>
+
+                <div className="flex items-start space-x-3">
+                  <div className="mt-1 p-1.5 bg-gray-50 rounded-lg">
+                    <ArrowUpRight className="w-3.5 h-3.5 text-gray-600" />
+                  </div>
+                  <div>
+                    <span className="block text-[8px] font-bold text-gray-400 uppercase tracking-tight mb-0.5">{t.success.until}</span>
+                    <div className="flex items-baseline space-x-2">
+                      <span className="text-sm font-black text-gray-900">
+                        {format(parseISO(result.pickUpDate), 'MMM d, yyyy', { locale: dateLocale })}
+                      </span>
+                      <span className="text-xs font-bold text-gray-600 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">
+                        {result.pickUpTime}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center text-xs pt-2">
-                  <span className="bg-green-50 text-green-900 text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider border border-green-100">
-                    {result.billableDays} {result.billableDays === 1 ? t.booking.day : t.booking.days}
-                  </span>
+                
+                <div className="pt-1">
+                  <div className="inline-flex items-center space-x-2 px-3 py-1.5 bg-green-900 rounded-full text-white">
+                    <Clock className="w-3 h-3" />
+                    <span className="text-[10px] font-black uppercase tracking-widest leading-none">
+                      {result.billableDays} {result.billableDays === 1 ? t.booking.day : t.booking.days}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] flex items-center">
                 <MapPin className="w-3 h-3 mr-1.5 text-green-900" /> {t.success.dropOffPoint}
               </h4>
-              <div className="text-[11px] font-bold text-gray-900 leading-relaxed max-w-[180px]">
-                {LOCATION_ADDRESS}
+              <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
+                <div className="text-[11px] font-bold text-gray-900 leading-relaxed mb-2">
+                  {LOCATION_ADDRESS}
+                </div>
+                <p className="text-[9px] text-gray-400 leading-relaxed italic border-l-2 border-gray-200 pl-2">
+                  {t.success.receptionInfo}
+                </p>
               </div>
-              <p className="text-[9px] text-gray-400 leading-relaxed italic border-l-2 border-gray-100 pl-2">
-                {t.success.receptionInfo}
-              </p>
+            </div>
+          </div>
+
+          <div className="space-y-4 pt-6 border-t border-gray-50">
+            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{t.verify.bags}</h4>
+            <div className="flex flex-wrap gap-3">
+              {(Object.entries(result.quantities) as [BagSize, number][]).map(([size, qty]) => {
+                if (qty === 0) return null;
+                return (
+                  <div key={size} className="flex items-center space-x-3 bg-white border border-gray-100 p-3 rounded-2xl shadow-sm hover:border-green-200 transition-all group">
+                    <div className="text-xl transform group-hover:scale-110 transition-transform">🧳</div>
+                    <div>
+                      <div className="text-[9px] font-bold text-gray-400 uppercase leading-none tracking-tight">{bagSizeNames[size]}</div>
+                      <div className="text-sm font-black text-gray-900 mt-0.5">× {qty}</div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
           <div className="space-y-3 pt-6 border-t border-gray-50">
             <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">{t.success.itemized}</h4>
             <div className="overflow-x-auto">
-              <table className="w-full text-xs">
+              <table className="w-full text-[11px]">
                 <thead>
-                  <tr className="text-left border-b border-gray-100">
+                  <tr className="text-left border-b border-gray-50">
                     <th className="pb-2 font-bold text-gray-400 uppercase text-[8px]">{t.success.description}</th>
                     <th className="pb-2 font-bold text-gray-400 uppercase text-[8px] text-right">{t.success.qty}</th>
                     <th className="pb-2 font-bold text-gray-400 uppercase text-[8px] text-right">Price/Day</th>
                     <th className="pb-2 font-bold text-gray-400 uppercase text-[8px] text-right">Subtotal</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-gray-50/50">
                   {(Object.entries(result.quantities) as [BagSize, number][]).map(([size, qty]) => {
                     if (qty === 0) return null;
                     const rule = PRICING_RULES[size];
                     return (
                       <tr key={size}>
-                        <td className="py-2.5 font-bold text-gray-900">{t.success.bagStorage} ({bagSizeNames[size]})</td>
-                        <td className="py-2.5 text-right font-medium text-gray-600">{qty}</td>
-                        <td className="py-2.5 text-right font-medium text-gray-600">€{rule.pricePerDay.toFixed(2)}</td>
-                        <td className="py-2.5 text-right font-bold text-gray-900">€{(qty * rule.pricePerDay).toFixed(2)}</td>
+                        <td className="py-2 text-gray-600">{t.success.bagStorage} ({bagSizeNames[size]})</td>
+                        <td className="py-2 text-right text-gray-500 font-medium">{qty}</td>
+                        <td className="py-2 text-right text-gray-500 font-medium">€{rule.pricePerDay.toFixed(2)}</td>
+                        <td className="py-2 text-right font-bold text-gray-900">€{(qty * rule.pricePerDay).toFixed(2)}</td>
                       </tr>
                     );
                   })}
                 </tbody>
                 <tfoot>
-                  <tr className="border-t border-gray-100">
-                    <td colSpan={3} className="pt-3 pb-1 text-right text-gray-400 font-bold uppercase text-[9px]">{t.success.subtotalDaily}</td>
+                  <tr className="border-t border-gray-50">
+                    <td colSpan={3} className="pt-3 pb-1 text-right text-gray-400 font-bold uppercase text-[8px]">{t.success.subtotalDaily}</td>
                     <td className="pt-3 pb-1 text-right font-bold text-gray-900">€{result.perDaySubtotal.toFixed(2)}</td>
                   </tr>
                   <tr>
-                    <td colSpan={3} className="py-1 text-right text-gray-400 font-bold uppercase text-[9px]">{t.booking.duration}:</td>
-                    <td className="py-1 text-right font-bold text-gray-900">× {result.billableDays} {result.billableDays === 1 ? t.booking.day : t.booking.days}</td>
+                    <td colSpan={3} className="py-1 text-right text-gray-400 font-bold uppercase text-[8px]">{t.booking.duration}:</td>
+                    <td className="py-1 text-right font-bold text-gray-900">× {result.billableDays}</td>
                   </tr>
-                  <tr className="border-t-2 border-green-900">
+                  <tr className="border-t border-green-900">
                     <td colSpan={3} className="py-4 text-right font-black text-green-900 uppercase tracking-[0.2em] text-[10px]">{t.success.totalPaid}</td>
                     <td className="py-4 text-right text-3xl font-black text-gray-900">€{result.totalPrice.toFixed(2)}</td>
                   </tr>
@@ -177,7 +222,6 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
             </div>
           </div>
 
-          {/* Action Section inside the card */}
           <div className="pt-8 border-t border-gray-100 flex flex-col items-center space-y-8">
             <div className="text-center w-full">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Save your booking pass</p>
