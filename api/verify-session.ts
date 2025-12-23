@@ -1,3 +1,4 @@
+
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
@@ -19,7 +20,10 @@ export default async function handler(req: any, res: any) {
       const quantities = JSON.parse(metadata.quantities || '{}');
       const billableDays = parseInt(metadata.billableDays || '1');
       const totalPrice = (session.amount_total || 0) / 100;
-      const bookingRef = session.id.substring(session.id.length - 8).toUpperCase();
+      
+      // Get booking reference from metadata (one source of truth)
+      // Fallback to ID suffix only if metadata version is missing
+      const bookingRef = metadata.bookingRef || session.id.substring(session.id.length - 8).toUpperCase();
 
       const booking = {
         quantities,

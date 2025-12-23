@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { CheckCircle, ArrowLeft, FileDown, MapPin, Calendar, User, Mail, Clock, Phone, ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import { BookingResult, BagSize, Language } from '../types';
@@ -35,6 +36,9 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
     [BagSize.LARGE]: t.booking.large,
   };
 
+  // Fallback if bookingRef is missing (should not happen for new bookings)
+  const displayRef = result.bookingRef || result.stripePaymentId.substring(result.stripePaymentId.length - 8).toUpperCase();
+
   return (
     <div className="max-w-3xl mx-auto space-y-10 animate-fade-in mb-24 md:mb-0">
       <div className="text-center print:hidden">
@@ -62,9 +66,9 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
               <p className="text-[10px] text-green-300 uppercase tracking-widest mt-1 font-bold">Booking Confirmation</p>
             </div>
           </div>
-          <div className="text-left md:text-right">
-            <p className="text-[9px] text-green-400 uppercase tracking-widest font-black">{t.success.resId}</p>
-            <p className="text-base font-mono font-bold tracking-widest uppercase">#{result.bookingRef}</p>
+          <div className="text-left md:text-right min-w-[140px]">
+            <p className="text-[9px] text-green-400 uppercase tracking-widest font-black">Booking Reference</p>
+            <p className="text-xl font-mono font-black tracking-widest uppercase">#{displayRef}</p>
           </div>
         </div>
         

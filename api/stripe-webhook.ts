@@ -1,3 +1,4 @@
+
 import Stripe from 'stripe';
 import { Resend } from 'resend';
 import { Buffer } from 'buffer';
@@ -49,6 +50,7 @@ async function generateBookingPdfBuffer(session: Stripe.Checkout.Session) {
   const dropOffTime = metadata.dropOffTime || '09:00';
   const pickUpDate = metadata.pickUpDate || new Date().toISOString();
   const pickUpTime = metadata.pickUpTime || '18:00';
+  const bookingRef = metadata.bookingRef || session.id.substring(session.id.length - 8).toUpperCase();
 
   const pdfDoc = await PDFDocument.create();
   const page = pdfDoc.addPage([595.28, 841.89]); 
@@ -65,8 +67,8 @@ async function generateBookingPdfBuffer(session: Stripe.Checkout.Session) {
   page.drawText('LUGGAGE DEPOSIT ROME', { x: 40, y: height - 55, size: 18, font: fontBold, color: rgb(1, 1, 1) });
   page.drawText('BOOKING CONFIRMATION', { x: 40, y: height - 75, size: 10, font: fontBold, color: rgb(0.7, 0.9, 0.8) });
 
-  page.drawText('RESERVATION ID', { x: width - 210, y: height - 55, size: 8, font: fontBold, color: rgb(0.7, 0.9, 0.8) });
-  page.drawText(session.id.substring(0, 24), { x: width - 210, y: height - 72, size: 9, font: fontRegular, color: rgb(1, 1, 1) });
+  page.drawText('BOOKING REFERENCE', { x: width - 210, y: height - 55, size: 8, font: fontBold, color: rgb(0.7, 0.9, 0.8) });
+  page.drawText(`#${bookingRef}`, { x: width - 210, y: height - 72, size: 12, font: fontBold, color: rgb(1, 1, 1) });
 
   let cursorY = height - 150;
   page.drawText('CUSTOMER DETAILS', { x: 40, y: cursorY, size: 8, font: fontBold, color: textGray });
@@ -170,7 +172,9 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
   const siteUrl = metadata.siteUrl || 'https://booking.luggagedepositrome.com';
   const quantities = JSON.parse(metadata.quantities || '{}');
   const totalPrice = (session.amount_total || 0) / 100;
-  const bookingRef = session.id.substring(session.id.length - 8).toUpperCase();
+  
+  // Single source of truth for reference
+  const bookingRef = metadata.bookingRef || session.id.substring(session.id.length - 8).toUpperCase();
 
   const pdfUrl = `${siteUrl}/api/booking-pdf?session_id=${session.id}&mode=download`;
   const walletUrl = `${siteUrl}/api/google-wallet?session_id=${session.id}`;
@@ -328,17 +332,6 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
                   </tr>
                 </table>
               </div>
-
-              <!-- PDF Download Button (Visible Everywhere) -->
-              <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="max-width: 280px; width: 100%; margin: 0 auto;">
-                <tr>
-                  <td align="center" bgcolor="#064e3b" style="border-radius: 14px; padding: 18px 20px;">
-                    <a href="${pdfUrl}" style="text-decoration: none; color: #ffffff; font-weight: 800; font-size: 15px; display: block; width: 100%;">
-                      Download Confirmation PDF
-                    </a>
-                  </td>
-                </tr>
-              </table>
             </div>
           </div>
         </div>

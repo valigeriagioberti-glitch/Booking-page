@@ -51,6 +51,9 @@ export default async function handler(req: any, res: any) {
     const dropOffTime = metadata.dropOffTime || '09:00';
     const pickUpDate = metadata.pickUpDate || new Date().toISOString();
     const pickUpTime = metadata.pickUpTime || '18:00';
+    
+    // Single source of truth for reference
+    const bookingRef = metadata.bookingRef || session.id.substring(session.id.length - 8).toUpperCase();
 
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([595.28, 841.89]); 
@@ -67,8 +70,8 @@ export default async function handler(req: any, res: any) {
     page.drawText('LUGGAGE DEPOSIT ROME', { x: 40, y: height - 55, size: 18, font: fontBold, color: rgb(1, 1, 1) });
     page.drawText('BOOKING CONFIRMATION', { x: 40, y: height - 75, size: 10, font: fontBold, color: rgb(0.7, 0.9, 0.8) });
 
-    page.drawText('RESERVATION ID', { x: width - 210, y: height - 55, size: 8, font: fontBold, color: rgb(0.7, 0.9, 0.8) });
-    page.drawText(session.id.substring(0, 24), { x: width - 210, y: height - 72, size: 9, font: fontRegular, color: rgb(1, 1, 1) });
+    page.drawText('BOOKING REFERENCE', { x: width - 210, y: height - 55, size: 8, font: fontBold, color: rgb(0.7, 0.9, 0.8) });
+    page.drawText(`#${bookingRef}`, { x: width - 210, y: height - 72, size: 12, font: fontBold, color: rgb(1, 1, 1) });
 
     let cursorY = height - 150;
 
@@ -136,7 +139,7 @@ export default async function handler(req: any, res: any) {
 
     res.writeHead(200, {
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `${disposition}; filename="booking-confirmation.pdf"`,
+      'Content-Disposition': `${disposition}; filename="booking-confirmation-${bookingRef}.pdf"`,
       'Content-Length': pdfBytes.length,
       'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
       'Pragma': 'no-cache',

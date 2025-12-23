@@ -63,6 +63,9 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ error: 'No bags selected for storage' });
     }
 
+    // Generate shared booking reference
+    const bookingRef = Math.random().toString(36).substring(2, 10).toUpperCase();
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       customer_email: customerEmail,
@@ -83,6 +86,7 @@ export default async function handler(req: any, res: any) {
       success_url: `${siteUrl}/#/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/#/`,
       metadata: {
+        bookingRef, // Store the generated ref
         customerName,
         customerPhone,
         dropOffDate,
