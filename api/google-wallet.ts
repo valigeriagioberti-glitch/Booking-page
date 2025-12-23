@@ -1,4 +1,9 @@
 import jwt from 'jsonwebtoken';
+import Stripe from 'stripe';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+  apiVersion: '2023-10-16' as any,
+});
 
 /**
  * Gets a Google OAuth2 Access Token using the Service Account credentials.
@@ -31,42 +36,56 @@ async function getGoogleAccessToken(email: string, key: string) {
 }
 
 export default async function handler(req: any, res: any) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed. Use POST.' });
-  }
-
-  const { 
-    bookingId, 
-    bookingReference,
-    small, 
-    medium, 
-    large, 
-    dropOffDate, 
-    pickUpDate, 
-    customerEmail, 
-    verifyUrl 
-  } = req.body;
-
-  if (!bookingId) {
-    return res.status(400).json({ error: 'bookingId is required.' });
-  }
-
-  const ISSUER_ID = process.env.GOOGLE_WALLET_ISSUER_ID;
-  const SERVICE_ACCOUNT_EMAIL = process.env.GOOGLE_WALLET_SERVICE_ACCOUNT_EMAIL;
-  const PRIVATE_KEY = process.env.GOOGLE_WALLET_PRIVATE_KEY?.replace(/\\n/g, '\n');
-
-  if (!ISSUER_ID || !SERVICE_ACCOUNT_EMAIL || !PRIVATE_KEY) {
-    const missing = [];
-    if (!ISSUER_ID) missing.push('GOOGLE_WALLET_ISSUER_ID');
-    if (!SERVICE_ACCOUNT_EMAIL) missing.push('GOOGLE_WALLET_SERVICE_ACCOUNT_EMAIL');
-    if (!PRIVATE_KEY) missing.push('GOOGLE_WALLET_PRIVATE_KEY');
-    return res.status(500).json({ 
-      error: 'Google Wallet configuration missing.',
-      details: `Missing environment variables: ${missing.join(', ')}`
-    });
-  }
+  let bookingId, bookingReference, small, medium, large, dropOffDate, pickUpDate, customerEmail;
 
   try {
+    if (req.method === 'GET') {
+      const { session_id } = req.query;
+      if (!session_id) return res.status(400).json({ error: 'session_id is required' });
+
+      const session = await stripe.checkout.sessions.retrieve(session_id);
+      if (session.payment_status !== 'paid') {
+        return res.status(403).json({ error: 'Payment not confirmed' });
+      }
+
+      const metadata = session.metadata || {};
+      const quantities = JSON.parse(metadata.quantities || '{}');
+      
+      bookingId = session.id;
+      bookingReference = session.id.substring(session.id.length - 8).toUpperCase();
+      small = quantities.Small || 0;
+      medium = quantities.Medium || 0;
+      large = quantities.Large || 0;
+      dropOffDate = metadata.dropOffDate;
+      pickUpDate = metadata.pickUpDate;
+      customerEmail = session.customer_details?.email;
+    } else if (req.method === 'POST') {
+      ({ 
+        bookingId, 
+        bookingReference,
+        small, 
+        medium, 
+        large, 
+        dropOffDate, 
+        pickUpDate, 
+        customerEmail 
+      } = req.body);
+    } else {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+
+    if (!bookingId) {
+      return res.status(400).json({ error: 'bookingId is required.' });
+    }
+
+    const ISSUER_ID = process.env.GOOGLE_WALLET_ISSUER_ID;
+    const SERVICE_ACCOUNT_EMAIL = process.env.GOOGLE_WALLET_SERVICE_ACCOUNT_EMAIL;
+    const PRIVATE_KEY = process.env.GOOGLE_WALLET_PRIVATE_KEY?.replace(/\\n/g, '\n');
+
+    if (!ISSUER_ID || !SERVICE_ACCOUNT_EMAIL || !PRIVATE_KEY) {
+      return res.status(500).json({ error: 'Google Wallet configuration missing.' });
+    }
+
     // 1. Authenticate with Google
     const accessToken = await getGoogleAccessToken(SERVICE_ACCOUNT_EMAIL, PRIVATE_KEY);
 
@@ -87,7 +106,7 @@ export default async function handler(req: any, res: any) {
     const dropDateFormatted = formatDate(dropOffDate);
     const pickDateFormatted = formatDate(pickUpDate);
 
-    // 3. Define Object Identity
+    // 3. Define Object Identity (Deterministic based on bookingId/session_id)
     const safeBookingId = bookingId.replace(/[^a-zA-Z0-9-_]/g, '_');
     const objectId = `${ISSUER_ID}.${safeBookingId}`;
     const objectIdEncoded = encodeURIComponent(objectId);
@@ -96,12 +115,9 @@ export default async function handler(req: any, res: any) {
     // 4. Construct the Generic Object
     const refToShow = bookingReference || (bookingId.length >= 8 ? bookingId.substring(bookingId.length - 8).toUpperCase() : bookingId.toUpperCase());
     
-    // Absolute URL for the redirect bridge to ensure QR code scanning works with HashRouter
     const protocol = req.headers['x-forwarded-proto'] || 'https';
     const host = req.headers.host;
     const qrRedirectUrl = `${protocol}://${host}/api/r?session_id=${encodeURIComponent(bookingId)}`;
-
-    // Format subheader with all luggage counts
     const luggageSubheader = `Luggage: S×${small || 0} · M×${medium || 0} · L×${large || 0}`;
 
     const genericObject = {
@@ -144,11 +160,9 @@ export default async function handler(req: any, res: any) {
     });
 
     if (getResponse.ok) {
-      // Exists -> PATCH
-      // Explicitly including header and subheader in updateMask to ensure they update for existing passes
       const mask = 'barcode,textModulesData,linksModuleData,cardTitle,header,subheader,hexBackgroundColor,logo,state';
       const patchUrl = `${getUrl}?updateMask=${mask}`;
-      const patchResponse = await fetch(patchUrl, {
+      await fetch(patchUrl, {
         method: 'PATCH',
         headers: { 
           'Authorization': `Bearer ${accessToken}`,
@@ -156,14 +170,9 @@ export default async function handler(req: any, res: any) {
         },
         body: JSON.stringify(genericObject)
       });
-      if (!patchResponse.ok) {
-        const errData = await patchResponse.json();
-        throw new Error(`Failed to update Wallet object: ${JSON.stringify(errData)}`);
-      }
     } else if (getResponse.status === 404) {
-      // Doesn't exist -> POST
       const postUrl = `https://walletobjects.googleapis.com/walletobjects/v1/genericObject`;
-      const postResponse = await fetch(postUrl, {
+      await fetch(postUrl, {
         method: 'POST',
         headers: { 
           'Authorization': `Bearer ${accessToken}`,
@@ -171,13 +180,6 @@ export default async function handler(req: any, res: any) {
         },
         body: JSON.stringify(genericObject)
       });
-      if (!postResponse.ok) {
-        const errData = await postResponse.json();
-        throw new Error(`Failed to create Wallet object: ${JSON.stringify(errData)}`);
-      }
-    } else {
-      const errData = await getResponse.json();
-      throw new Error(`Error checking Wallet object existence: ${JSON.stringify(errData)}`);
     }
 
     // 6. Generate the signed Save-to-Wallet JWT
@@ -194,6 +196,9 @@ export default async function handler(req: any, res: any) {
     const token = jwt.sign(claims, PRIVATE_KEY, { algorithm: 'RS256' });
     const saveUrl = `https://pay.google.com/gp/v/save/${token}`;
 
+    if (req.method === 'GET') {
+      return res.redirect(302, saveUrl);
+    }
     return res.status(200).json({ saveUrl, objectId });
 
   } catch (err: any) {

@@ -1,4 +1,3 @@
-
 import Stripe from 'stripe';
 import { Resend } from 'resend';
 import { Buffer } from 'buffer';
@@ -168,12 +167,13 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
   const pickUpDate = metadata.pickUpDate || '—';
   const pickUpTime = metadata.pickUpTime || '—';
   const billableDays = metadata.billableDays || '—';
-  const siteUrl = metadata.siteUrl || 'https://luggagedepositrome.com';
+  const siteUrl = metadata.siteUrl || 'https://booking.luggagedepositrome.com';
   const quantities = JSON.parse(metadata.quantities || '{}');
   const totalPrice = (session.amount_total || 0) / 100;
   const bookingRef = session.id.substring(session.id.length - 8).toUpperCase();
 
   const pdfUrl = `${siteUrl}/api/booking-pdf?session_id=${session.id}&mode=download`;
+  const walletUrl = `${siteUrl}/api/google-wallet?session_id=${session.id}`;
   const viewUrl = `${siteUrl}/#/success?session_id=${session.id}`;
 
   let pdfBuffer: Buffer | null = null;
@@ -278,7 +278,16 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
           </div>
 
           <div style="text-align: center; margin-top: 40px;">
-            <a href="${pdfUrl}" style="background-color: #064e3b; color: #ffffff; padding: 18px 32px; text-decoration: none; border-radius: 14px; font-weight: 800; font-size: 15px; display: inline-block; box-shadow: 0 10px 15px -3px rgba(6, 78, 59, 0.2);">Download Confirmation PDF</a>
+            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 20px;">
+              <tr>
+                <td align="center">
+                  <a href="${walletUrl}" style="background-color: #064e3b; color: #ffffff; padding: 18px 32px; text-decoration: none; border-radius: 14px; font-weight: 800; font-size: 15px; display: inline-block; box-shadow: 0 10px 15px -3px rgba(6, 78, 59, 0.2); width: 220px; text-align: center;">Add to Google Wallet</a>
+                  <p style="font-size: 11px; color: #9ca3af; margin-top: 10px; margin-bottom: 10px;">If the button doesn't work, open this link:<br/><a href="${walletUrl}" style="color: #064e3b; text-decoration: underline;">${walletUrl}</a></p>
+                </td>
+              </tr>
+            </table>
+            
+            <a href="${pdfUrl}" style="background-color: #064e3b; color: #ffffff; padding: 18px 32px; text-decoration: none; border-radius: 14px; font-weight: 800; font-size: 15px; display: inline-block; box-shadow: 0 10px 15px -3px rgba(6, 78, 59, 0.2); width: 220px; text-align: center;">Download Confirmation PDF</a>
           </div>
         </div>
       </div>
