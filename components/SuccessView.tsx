@@ -225,23 +225,25 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
               {/* Wallet Section */}
               <div className="flex-1 text-center md:text-left">
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 md:pl-1">Save your booking pass</p>
-                <a 
-                  href={walletUrl}
-                  className="inline-block w-full max-w-[320px] transition-all hover:opacity-90 active:opacity-85 transform hover:scale-[1.02]"
-                >
-                  <img 
-                    src="https://booking.luggagedepositrome.com/assets/google-wallet/add_to_google_wallet_black.png" 
-                    alt="Add to Google Wallet" 
-                    className="w-full h-auto mx-auto md:mx-0"
-                  />
-                </a>
+                <div className="h-14 flex items-center justify-center md:justify-start">
+                  <a 
+                    href={walletUrl}
+                    className="inline-block transition-all hover:opacity-90 active:opacity-85 transform hover:scale-[1.02]"
+                  >
+                    <img 
+                      src="https://booking.luggagedepositrome.com/assets/google-wallet/add_to_google_wallet_black.png" 
+                      alt="Add to Google Wallet" 
+                      className="h-10 md:h-12 w-auto"
+                    />
+                  </a>
+                </div>
               </div>
 
               {/* PDF Download Section */}
               <div className="flex-1">
                 <a 
                   href={downloadUrl}
-                  className="flex w-full bg-green-900 text-white py-4 rounded-xl font-bold items-center justify-center space-x-2 hover:bg-black transition-all shadow-sm group"
+                  className="flex w-full bg-green-900 text-white h-14 rounded-xl font-bold items-center justify-center space-x-2 hover:bg-black transition-all shadow-sm group"
                 >
                   <FileDown className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
                   <span className="text-sm uppercase tracking-widest">{t.success.download}</span>
