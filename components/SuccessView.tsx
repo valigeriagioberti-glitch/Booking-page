@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, ArrowLeft, Printer, FileDown, MapPin, Calendar, User, Mail, Clock, Phone, ArrowDownRight, ArrowUpRight } from 'lucide-react';
+import { CheckCircle, ArrowLeft, FileDown, MapPin, Calendar, User, Mail, Clock, Phone, ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import { BookingResult, BagSize, Language } from '../types';
 import { format } from 'date-fns';
 import { parseISO } from 'date-fns/parseISO';
@@ -18,9 +18,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
   const t = TRANSLATIONS[language];
   const dateLocale = language === 'it' ? itLocale : enLocale;
 
-  const basePdfUrl = `/api/booking-pdf?session_id=${result.stripePaymentId}&lang=${language}`;
-  const printUrl = `${basePdfUrl}&mode=print`;
-  const downloadUrl = `${basePdfUrl}&mode=download`;
+  const downloadUrl = `/api/booking-pdf?session_id=${result.stripePaymentId}&lang=${language}&mode=download`;
   const walletUrl = `/api/google-wallet?session_id=${result.stripePaymentId}`;
 
   const romeTime = result.timestamp 
@@ -222,38 +220,33 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
             </div>
           </div>
 
-          <div className="pt-8 border-t border-gray-100 flex flex-col items-center space-y-8">
-            <div className="text-center w-full">
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Save your booking pass</p>
-              <a 
-                href={walletUrl}
-                className="inline-block w-full max-w-[240px] transition-all hover:opacity-90 active:opacity-85 transform hover:scale-[1.02]"
-              >
-                <img 
-                  src="https://booking.luggagedepositrome.com/assets/google-wallet/add_to_google_wallet_black.png" 
-                  alt="Add to Google Wallet" 
-                  className="w-full h-auto"
-                />
-              </a>
-            </div>
+          <div className="pt-8 border-t border-gray-100">
+            <div className="flex flex-col md:flex-row md:items-end gap-6 w-full">
+              {/* Wallet Section */}
+              <div className="flex-1 text-center md:text-left">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 md:pl-1">Save your booking pass</p>
+                <a 
+                  href={walletUrl}
+                  className="inline-block w-full max-w-[320px] transition-all hover:opacity-90 active:opacity-85 transform hover:scale-[1.02]"
+                >
+                  <img 
+                    src="https://booking.luggagedepositrome.com/assets/google-wallet/add_to_google_wallet_black.png" 
+                    alt="Add to Google Wallet" 
+                    className="w-full h-auto mx-auto md:mx-0"
+                  />
+                </a>
+              </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 w-full">
-              <a 
-                href={printUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex-1 bg-green-900 text-white py-4 rounded-xl font-bold flex items-center justify-center space-x-2 hover:bg-black transition-all shadow-sm group"
-              >
-                <Printer className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                <span className="text-sm uppercase tracking-widest">{t.success.print}</span>
-              </a>
-              <a 
-                href={downloadUrl}
-                className="flex-1 bg-white text-gray-900 border-2 border-gray-900 py-4 rounded-xl font-bold flex items-center justify-center space-x-2 hover:bg-gray-50 transition-all group"
-              >
-                <FileDown className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
-                <span className="text-sm uppercase tracking-widest">{t.success.download}</span>
-              </a>
+              {/* PDF Download Section */}
+              <div className="flex-1">
+                <a 
+                  href={downloadUrl}
+                  className="flex w-full bg-green-900 text-white py-4 rounded-xl font-bold items-center justify-center space-x-2 hover:bg-black transition-all shadow-sm group"
+                >
+                  <FileDown className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" />
+                  <span className="text-sm uppercase tracking-widest">{t.success.download}</span>
+                </a>
+              </div>
             </div>
           </div>
         </div>
