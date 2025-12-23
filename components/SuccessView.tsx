@@ -185,7 +185,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
           className="block w-full max-w-[320px] transition-transform hover:scale-[1.02] active:scale-[0.98]"
         >
           <img 
-            src="https://booking.luggagedepositrome.com/google-wallet-button.png" 
+            src="https://booking.luggagedepositrome.com/assets/google-wallet/add_to_google_wallet_black.png" 
             alt="Add to Google Wallet" 
             className="w-full h-auto"
           />

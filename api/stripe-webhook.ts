@@ -286,7 +286,7 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
                     <tr>
                       <td align="center">
                         <a href="${walletUrl}" style="text-decoration: none; display: block; width: 100%;">
-                          <img src="https://booking.luggagedepositrome.com/google-wallet-button.png" alt="Add to Google Wallet" width="320" style="max-width: 100%; height: auto; display: block; border: 0;">
+                          <img src="https://booking.luggagedepositrome.com/assets/google-wallet/add_to_google_wallet_black.png" alt="Add to Google Wallet" width="320" style="max-width: 100%; height: auto; display: block; border: 0;">
                         </a>
                       </td>
                     </tr>
