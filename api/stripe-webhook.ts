@@ -172,7 +172,6 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
   const quantities = JSON.parse(metadata.quantities || '{}');
   const totalPrice = (session.amount_total || 0) / 100;
   
-  // Single source of truth for reference
   const bookingRef = metadata.bookingRef || session.id.substring(session.id.length - 8).toUpperCase();
 
   const pdfUrl = `${siteUrl}/api/booking-pdf?session_id=${session.id}&mode=download`;
@@ -205,23 +204,27 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
   const formattedDropOffDate = formatEmailDate(dropOffDate);
   const formattedPickUpDate = formatEmailDate(pickUpDate);
 
-  const renderBags = (isOwner: boolean) => {
+  const renderOwnerBags = () => {
     return Object.entries(quantities)
       .filter(([_, qty]) => (qty as number) > 0)
       .map(([size, qty]) => {
-        if (isOwner) {
-          return `
-            <div style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-weight: 700; color: #064e3b; font-size: 14px;">${size.toUpperCase()} (Bags)</span>
-              <span style="background-color: #064e3b; color: #ffffff; width: 32px; height: 32px; border-radius: 16px; display: inline-block; line-height: 32px; text-align: center; font-weight: 900; font-size: 14px;">${qty}</span>
-            </div>
-          `;
-        }
         return `
-          <tr>
-            <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; color: #4b5563; font-size: 14px;">Luggage Storage (${size})</td>
-            <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; color: #111827; font-size: 14px; text-align: right; font-weight: bold;">x ${qty}</td>
-          </tr>
+          <div style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: 700; color: #064e3b; font-size: 14px;">${size.toUpperCase()} (Bags)</span>
+            <span style="background-color: #064e3b; color: #ffffff; width: 32px; height: 32px; border-radius: 16px; display: inline-block; line-height: 32px; text-align: center; font-weight: 900; font-size: 14px;">${qty}</span>
+          </div>
+        `;
+      }).join('');
+  };
+
+  const renderCustomerChips = () => {
+    return Object.entries(quantities)
+      .filter(([_, qty]) => (qty as number) > 0)
+      .map(([size, qty]) => {
+        return `
+          <div style="display: inline-block; background-color: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px; padding: 6px 12px; margin: 0 6px 6px 0; font-size: 13px; font-weight: 700; color: #374151;">
+            ${size} &times; ${qty}
+          </div>
         `;
       }).join('');
   };
@@ -240,9 +243,6 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
             overflow: visible !important;
             mso-hide: none !important;
           }
-          .show-on-mobile table { display: table !important; }
-          .show-on-mobile tr { display: table-row !important; }
-          .show-on-mobile td { display: table-cell !important; }
           .hide-on-mobile {
             display: none !important;
           }
@@ -251,91 +251,72 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
     </head>
     <body style="margin: 0; padding: 0; background-color: #f9fafb;">
       <div style="${commonStyles} background-color: #f9fafb; padding: 40px 16px;">
-        <div style="max-width: 680px; margin: 0 auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-          <div style="background-color: #064e3b; padding: 40px 30px; text-align: center;">
-            <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.025em;">Booking Confirmed!</h1>
-            <p style="color: #a7f3d0; margin: 8px 0 0 0; text-transform: uppercase; letter-spacing: 0.1em; font-size: 12px; font-weight: 700;">Luggage Deposit Rome</p>
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+          <div style="background-color: #064e3b; padding: 30px; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.025em;">Booking Confirmed!</h1>
+            <p style="color: #a7f3d0; margin: 6px 0 0 0; text-transform: uppercase; letter-spacing: 0.1em; font-size: 11px; font-weight: 700;">Luggage Deposit Rome</p>
           </div>
           
-          <div style="padding: 40px 16px;">
-            <p style="font-size: 16px; margin-top: 0;">Hi <strong>${customerName}</strong>,</p>
-            <p style="color: #4b5563; font-size: 15px;">Your luggage storage has been successfully reserved. We look forward to seeing you in Rome!</p>
+          <div style="padding: 30px 24px;">
+            <p style="font-size: 16px; margin: 0 0 8px 0;">Hi <strong>${customerName}</strong>,</p>
+            <p style="color: #4b5563; font-size: 15px; margin: 0;">Your reservation is confirmed. We look forward to seeing you!</p>
             
-            <div style="margin: 30px 0; padding: 25px; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 20px;">
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; border-bottom: 1px solid #e5e7eb; padding-bottom: 15px;">
-                <div>
-                  <p style="margin: 0; font-size: 11px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Reference</p>
-                  <p style="margin: 4px 0 0 0; font-family: monospace; font-size: 18px; font-weight: bold; color: #064e3b;">#${bookingRef}</p>
-                </div>
+            <div style="margin: 24px 0; padding: 20px; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 20px;">
+              <div style="margin-bottom: 16px; border-bottom: 1px solid #e5e7eb; padding-bottom: 12px;">
+                <p style="margin: 0; font-size: 11px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Reference</p>
+                <p style="margin: 4px 0 0 0; font-family: monospace; font-size: 16px; font-weight: bold; color: #064e3b;">#${bookingRef}</p>
               </div>
 
-              <h3 style="margin: 0 0 15px 0; font-size: 13px; font-weight: 800; color: #111827; text-transform: uppercase; letter-spacing: 0.05em;">Booking Summary</h3>
-              
-              <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+              <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
                 <tr>
-                  <td style="padding: 6px 0; color: #6b7280; font-size: 13px;">Drop-off time</td>
-                  <td style="padding: 6px 0; color: #111827; font-size: 13px; text-align: right; font-weight: 700;">${dropOffTime}</td>
+                  <td style="padding: 4px 0; color: #6b7280; font-size: 13px;">Drop-off time</td>
+                  <td style="padding: 4px 0; color: #111827; font-size: 13px; text-align: right; font-weight: 700;">${dropOffTime}</td>
                 </tr>
                 <tr>
-                  <td style="padding: 6px 0; color: #6b7280; font-size: 13px;">Pick-up time</td>
-                  <td style="padding: 6px 0; color: #111827; font-size: 13px; text-align: right; font-weight: 700;">${pickUpTime}</td>
+                  <td style="padding: 4px 0; color: #6b7280; font-size: 13px;">Pick-up time</td>
+                  <td style="padding: 4px 0; color: #111827; font-size: 13px; text-align: right; font-weight: 700;">${pickUpTime}</td>
                 </tr>
                 <tr>
-                  <td style="padding: 6px 0; color: #6b7280; font-size: 13px;">Total Duration</td>
-                  <td style="padding: 6px 0; color: #064e3b; font-size: 13px; text-align: right; font-weight: 800;">${billableDays} Day(s)</td>
+                  <td style="padding: 4px 0; color: #6b7280; font-size: 13px;">Total Duration</td>
+                  <td style="padding: 4px 0; color: #064e3b; font-size: 13px; text-align: right; font-weight: 800;">${billableDays} Day(s)</td>
                 </tr>
               </table>
 
-              <div style="background-color: #064e3b; border-radius: 12px; padding: 16px; color: #ffffff; text-align: center; margin-bottom: 25px;">
-                <p style="margin: 0; font-size: 14px; font-weight: 800;">Drop-off: ${formattedDropOffDate} – ${dropOffTime}</p>
-                <p style="margin: 6px 0 0 0; font-size: 14px; font-weight: 800;">Pick-up: ${formattedPickUpDate} – ${pickUpTime}</p>
+              <div style="background-color: #064e3b; border-radius: 12px; padding: 14px; color: #ffffff; text-align: center; margin-bottom: 16px;">
+                <p style="margin: 0; font-size: 15px; font-weight: 700; line-height: 1.2;">Drop-off: ${formattedDropOffDate}, ${dropOffTime}</p>
+                <p style="margin: 4px 0 0 0; font-size: 15px; font-weight: 700; line-height: 1.2;">Pick-up: ${formattedPickUpDate}, ${pickUpTime}</p>
               </div>
 
-              <h3 style="margin: 20px 0 12px 0; font-size: 11px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Luggage Breakdown</h3>
-              ${renderBags(true)}
+              <div style="margin-bottom: 16px;">
+                <p style="margin: 0 0 8px 0; font-size: 11px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Luggage</p>
+                <div style="line-height: 1;">${renderCustomerChips()}</div>
+              </div>
 
-              <div style="margin-top: 25px; padding-top: 20px; border-top: 2px dashed #e5e7eb; text-align: right;">
+              <div style="margin-top: 20px; padding-top: 16px; border-top: 2px dashed #e5e7eb; text-align: right;">
                 <p style="margin: 0; font-size: 11px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Total Paid</p>
-                <p style="margin: 5px 0 0 0; font-size: 28px; font-weight: 900; color: #064e3b;">€${totalPrice.toFixed(2)}</p>
-                <p style="margin: 5px 0 0 0; font-size: 11px; font-weight: 700; color: #059669;">✅ Payment Verified</p>
+                <p style="margin: 4px 0 0 0; font-size: 24px; font-weight: 900; color: #064e3b;">€${totalPrice.toFixed(2)}</p>
+                <p style="margin: 4px 0 0 0; font-size: 11px; font-weight: 700; color: #059669;">✅ Payment Verified</p>
               </div>
             </div>
 
-            <div style="margin-bottom: 30px;">
-              <h3 style="font-size: 14px; font-weight: 800; color: #111827; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Where to find us:</h3>
+            <div style="margin-bottom: 24px;">
+              <h3 style="font-size: 13px; font-weight: 800; color: #111827; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.05em;">Where to find us:</h3>
               <p style="margin: 0; font-size: 15px; font-weight: 700;">Via Gioberti, 42</p>
               <p style="margin: 2px 0 0 0; color: #6b7280; font-size: 14px;">00185 Roma RM, Italy (near Roma Termini)</p>
-              <p style="margin: 10px 0 0 0; font-size: 13px; color: #064e3b; font-weight: 600;">Open Daily: 08:30 - 21:30</p>
+              <p style="margin: 8px 0 0 0; font-size: 13px; color: #064e3b; font-weight: 600;">Open Daily: 08:30 - 21:30</p>
             </div>
 
-            <div style="text-align: center; margin-top: 40px;">
-              <!-- Desktop Fallback Line -->
-              <div class="hide-on-mobile" style="margin-bottom: 20px;">
-                <p style="font-size: 13px; color: #6b7280; margin: 0 0 20px 0;">
-                  Want a Wallet pass? <a href="${desktopRedirectUrl}" style="color: #0f766e; text-decoration: underline; font-weight: 600;">Open the booking link</a> and tap "Add to Google Wallet".
+            <div style="text-align: center; margin-top: 32px;">
+              <div class="hide-on-mobile" style="margin-bottom: 16px;">
+                <p style="font-size: 13px; color: #6b7280; margin: 0;">
+                  Want a Wallet pass? <a href="${desktopRedirectUrl}" style="color: #0f766e; text-decoration: underline; font-weight: 600;">Open the booking link</a> on mobile.
                 </p>
               </div>
 
-              <!-- Mobile-only Google Wallet block -->
               <div class="show-on-mobile" style="display:none; max-height:0; overflow:hidden; mso-hide:all;">
-                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
-                  <tr>
-                    <td align="center">
-                      <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="max-width: 320px; width: 100%; margin: 0 auto;">
-                        <tr>
-                          <td align="center">
-                            <a href="${walletUrl}" style="text-decoration: none; display: block; width: 100%;">
-                              <img src="https://booking.luggagedepositrome.com/assets/google-wallet/add_to_google_wallet_black.png" alt="Add to Google Wallet" width="320" style="max-width: 100%; height: auto; display: block; border: 0;">
-                            </a>
-                          </td>
-                        </tr>
-                      </table>
-                      <p style="font-size: 12px; line-height: 16px; color: #6b7280; margin: 10px 0 18px 0; text-align: center;">
-                        If the button doesn’t work, <a href="${walletUrl}" style="color: #0f766e; text-decoration: underline; font-weight: 600;">click here</a>.
-                      </p>
-                    </td>
-                  </tr>
-                </table>
+                <a href="${walletUrl}" style="text-decoration: none; display: block; width: 100%; max-width: 320px; margin: 0 auto;">
+                  <img src="https://booking.luggagedepositrome.com/assets/google-wallet/add_to_google_wallet_black.png" alt="Add to Google Wallet" width="320" style="max-width: 100%; height: auto; display: block; border: 0;">
+                </a>
               </div>
             </div>
           </div>
@@ -378,7 +359,7 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
             </div>
 
             <h3 style="margin: 20px 0 15px 0; font-size: 12px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Luggage Breakdown</h3>
-            ${renderBags(true)}
+            ${renderOwnerBags()}
 
             <div style="margin-top: 25px; padding-top: 20px; border-top: 2px dashed #e5e7eb; text-align: right;">
               <p style="margin: 0; font-size: 11px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Total Paid</p>
@@ -397,19 +378,9 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
           </div>
 
           <div style="display: flex; gap: 10px; margin-top: 40px; text-align: center;">
-            <a href="${pdfUrl}" style="background-color: #064e3b; color: #ffffff; padding: 16px 20px; text-decoration: none; border-radius: 12px; font-weight: 800; font-size: 14px; flex: 1; display: inline-block;">Download PDF Receipt</a>
+            <a href="${pdfUrl}" style="background-color: #064e3b; color: #ffffff; padding: 16px 20px; text-decoration: none; border-radius: 12px; font-weight: 800; font-size: 14px; flex: 1; display: inline-block;">Download PDF</a>
             <a href="${viewUrl}" style="background-color: #ffffff; color: #111827; border: 2px solid #111827; padding: 14px 20px; text-decoration: none; border-radius: 12px; font-weight: 800; font-size: 14px; flex: 1; display: inline-block;">View Booking</a>
           </div>
-
-          <div style="margin-top: 30px; padding: 15px; background-color: #fffbeb; border: 1px solid #fde68a; border-radius: 12px;">
-             <p style="margin: 0; font-size: 13px; color: #92400e; font-weight: 700; text-align: center;">Operational Note: Prepare storage space for ${customerName} before arrival.</p>
-          </div>
-        </div>
-
-        <div style="background-color: #f3f4f6; padding: 30px; text-align: center; border-top: 1px solid #e5e7eb;">
-          <p style="margin: 0; font-size: 12px; color: #111827; font-weight: 700;">Luggage Deposit Rome</p>
-          <p style="margin: 4px 0 0 0; font-size: 11px; color: #6b7280;">Via Gioberti, 42 &bull; Roma Termini</p>
-          <p style="margin: 10px 0 0 0; font-size: 10px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">&copy; ${new Date().getFullYear()} Operation Dashboard</p>
         </div>
       </div>
     </div>
