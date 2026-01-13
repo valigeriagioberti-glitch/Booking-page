@@ -1,3 +1,4 @@
+
 import Stripe from 'stripe';
 import { Resend } from 'resend';
 import { Buffer } from 'buffer';
@@ -141,4 +142,300 @@ export default async function handler(req: any, res: any) {
     event = stripe.webhooks.constructEvent(
       buf,
       sig,
-      process.env.STRIPE_
+      process.env.STRIPE_WEBHOOK_SECRET || ''
+    );
+  } catch (err: any) {
+    console.error(`Webhook Signature Verification Error: ${err.message}`);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object as Stripe.Checkout.Session;
+    if (session.payment_status === 'paid') {
+      await handleSuccessfulPayment(session);
+    }
+  }
+
+  res.status(200).json({ received: true });
+}
+
+async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
+  const metadata = session.metadata || {};
+  const customerEmail = session.customer_details?.email;
+  const customerName = metadata.customerName || '—';
+  const customerPhone = metadata.customerPhone || '—';
+  const dropOffDate = metadata.dropOffDate || '—';
+  const dropOffTime = metadata.dropOffTime || '—';
+  const pickUpDate = metadata.pickUpDate || '—';
+  const pickUpTime = metadata.pickUpTime || '—';
+  const billableDays = metadata.billableDays || '—';
+  const siteUrl = metadata.siteUrl || 'https://booking.luggagedepositrome.com';
+  const quantities = JSON.parse(metadata.quantities || '{}');
+  const totalPrice = (session.amount_total || 0) / 100;
+  
+  // Single source of truth for reference
+  const bookingRef = metadata.bookingRef || session.id.substring(session.id.length - 8).toUpperCase();
+
+  const pdfUrl = `${siteUrl}/api/booking-pdf?session_id=${session.id}&mode=download`;
+  const walletUrl = `${siteUrl}/api/google-wallet?session_id=${session.id}`;
+  const desktopRedirectUrl = `${siteUrl}/api/r?session_id=${session.id}`;
+  const viewUrl = `${siteUrl}/#/success?session_id=${session.id}`;
+
+  let pdfBuffer: Buffer | null = null;
+  try {
+    pdfBuffer = await generateBookingPdfBuffer(session);
+  } catch (err) {
+    console.error('Failed to generate PDF for attachment:', err);
+  }
+
+  const commonStyles = `
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    color: #111827;
+  `;
+
+  const formatEmailDate = (dateStr: string) => {
+    if (!dateStr || dateStr === '—') return '—';
+    try {
+      return format(parseISO(dateStr), 'dd MMM yyyy');
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
+  const formattedDropOffDate = formatEmailDate(dropOffDate);
+  const formattedPickUpDate = formatEmailDate(pickUpDate);
+
+  const renderBags = (isOwner: boolean) => {
+    return Object.entries(quantities)
+      .filter(([_, qty]) => (qty as number) > 0)
+      .map(([size, qty]) => {
+        if (isOwner) {
+          return `
+            <div style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-weight: 700; color: #064e3b; font-size: 14px;">${size.toUpperCase()} (Bags)</span>
+              <span style="background-color: #064e3b; color: #ffffff; width: 32px; height: 32px; border-radius: 16px; display: inline-block; line-height: 32px; text-align: center; font-weight: 900; font-size: 14px;">${qty}</span>
+            </div>
+          `;
+        }
+        return `
+          <tr>
+            <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; color: #4b5563; font-size: 14px;">Luggage Storage (${size})</td>
+            <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; color: #111827; font-size: 14px; text-align: right; font-weight: bold;">x ${qty}</td>
+          </tr>
+        `;
+      }).join('');
+  };
+
+  const customerHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media screen and (max-width: 480px) {
+          .show-on-mobile {
+            display: block !important;
+            max-height: none !important;
+            overflow: visible !important;
+            mso-hide: none !important;
+          }
+          .show-on-mobile table { display: table !important; }
+          .show-on-mobile tr { display: table-row !important; }
+          .show-on-mobile td { display: table-cell !important; }
+          .hide-on-mobile {
+            display: none !important;
+          }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f9fafb;">
+      <div style="${commonStyles} background-color: #f9fafb; padding: 40px 16px;">
+        <div style="max-width: 680px; margin: 0 auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+          <div style="background-color: #064e3b; padding: 40px 30px; text-align: center;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.025em;">Booking Confirmed!</h1>
+            <p style="color: #a7f3d0; margin: 8px 0 0 0; text-transform: uppercase; letter-spacing: 0.1em; font-size: 12px; font-weight: 700;">Luggage Deposit Rome</p>
+          </div>
+          
+          <div style="padding: 40px 16px;">
+            <p style="font-size: 16px; margin-top: 0;">Hi <strong>${customerName}</strong>,</p>
+            <p style="color: #4b5563; font-size: 15px;">Your luggage storage has been successfully reserved. We look forward to seeing you in Rome!</p>
+            
+            <div style="margin: 30px 0; padding: 25px; background-color: #fdfdfd; border: 1px solid #f3f4f6; border-radius: 16px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                <div>
+                  <p style="margin: 0; font-size: 11px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Reference</p>
+                  <p style="margin: 4px 0 0 0; font-family: monospace; font-size: 16px; font-weight: bold; color: #064e3b;">#${bookingRef}</p>
+                </div>
+              </div>
+
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Drop-off</td>
+                  <td style="padding: 8px 0; color: #111827; font-size: 13px; text-align: right; font-weight: 600;">${dropOffDate} @ ${dropOffTime}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Pick-up</td>
+                  <td style="padding: 8px 0; color: #111827; font-size: 13px; text-align: right; font-weight: 600;">${pickUpDate} @ ${pickUpTime}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Duration</td>
+                  <td style="padding: 8px 0; color: #064e3b; font-size: 13px; text-align: right; font-weight: 800;">${billableDays} Day(s)</td>
+                </tr>
+              </table>
+
+              <div style="margin: 20px 0; border-top: 2px dashed #f3f4f6;"></div>
+              
+              <table style="width: 100%; border-collapse: collapse;">
+                ${renderBags(false)}
+                <tr>
+                  <td style="padding: 20px 0 0 0; color: #064e3b; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">Total Paid</td>
+                  <td style="padding: 20px 0 0 0; color: #111827; font-size: 24px; font-weight: 900; text-align: right;">€${totalPrice.toFixed(2)}</td>
+                </tr>
+              </table>
+            </div>
+
+            <div style="margin-bottom: 30px;">
+              <h3 style="font-size: 14px; font-weight: 800; color: #111827; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Where to find us:</h3>
+              <p style="margin: 0; font-size: 15px; font-weight: 700;">Via Gioberti, 42</p>
+              <p style="margin: 2px 0 0 0; color: #6b7280; font-size: 14px;">00185 Roma RM, Italy (near Roma Termini)</p>
+              <p style="margin: 10px 0 0 0; font-size: 13px; color: #064e3b; font-weight: 600;">Open Daily: 08:30 - 21:30</p>
+            </div>
+
+            <div style="text-align: center; margin-top: 40px;">
+              <!-- Desktop Fallback Line -->
+              <div class="hide-on-mobile" style="margin-bottom: 20px;">
+                <p style="font-size: 13px; color: #6b7280; margin: 0 0 20px 0;">
+                  Want a Wallet pass? <a href="${desktopRedirectUrl}" style="color: #0f766e; text-decoration: underline; font-weight: 600;">Open the booking link</a> and tap "Add to Google Wallet".
+                </p>
+              </div>
+
+              <!-- Mobile-only Google Wallet block -->
+              <div class="show-on-mobile" style="display:none; max-height:0; overflow:hidden; mso-hide:all;">
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                  <tr>
+                    <td align="center">
+                      <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="max-width: 320px; width: 100%; margin: 0 auto;">
+                        <tr>
+                          <td align="center">
+                            <a href="${walletUrl}" style="text-decoration: none; display: block; width: 100%;">
+                              <img src="https://booking.luggagedepositrome.com/assets/google-wallet/add_to_google_wallet_black.png" alt="Add to Google Wallet" width="320" style="max-width: 100%; height: auto; display: block; border: 0;">
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                      <p style="font-size: 12px; line-height: 16px; color: #6b7280; margin: 10px 0 18px 0; text-align: center;">
+                        If the button doesn’t work, <a href="${walletUrl}" style="color: #0f766e; text-decoration: underline; font-weight: 600;">click here</a>.
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const ownerHtml = `
+    <div style="${commonStyles} background-color: #f3f4f6; padding: 40px 20px;">
+      <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+        <div style="background-color: #064e3b; padding: 40px 30px; text-align: center;">
+          <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.025em;">New Booking Received</h1>
+          <p style="color: #a7f3d0; margin: 8px 0 0 0; text-transform: uppercase; letter-spacing: 0.1em; font-size: 11px; font-weight: 700;">Payment Confirmed via Stripe</p>
+        </div>
+
+        <div style="padding: 40px 30px;">
+          <div style="background-color: #f9fafb; padding: 25px; border-radius: 20px; border: 1px solid #e5e7eb; margin-bottom: 30px;">
+            <h3 style="margin: 0 0 20px 0; font-size: 14px; font-weight: 800; color: #111827; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #e5e7eb; padding-bottom: 10px;">Booking Summary</h3>
+            
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+              <tr>
+                <td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Drop-off time</td>
+                <td style="padding: 8px 0; color: #111827; font-size: 14px; text-align: right; font-weight: 700;">${dropOffTime}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Pick-up time</td>
+                <td style="padding: 8px 0; color: #111827; font-size: 14px; text-align: right; font-weight: 700;">${pickUpTime}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Total Duration</td>
+                <td style="padding: 8px 0; color: #064e3b; font-size: 14px; text-align: right; font-weight: 800;">${billableDays} Day(s)</td>
+              </tr>
+            </table>
+
+            <div style="background-color: #064e3b; border-radius: 12px; padding: 16px; color: #ffffff; text-align: center; margin-bottom: 25px;">
+              <p style="margin: 0; font-size: 14px; font-weight: 800;">Drop-off: ${formattedDropOffDate} – ${dropOffTime}</p>
+              <p style="margin: 6px 0 0 0; font-size: 14px; font-weight: 800;">Pick-up: ${formattedPickUpDate} – ${pickUpTime}</p>
+            </div>
+
+            <h3 style="margin: 20px 0 15px 0; font-size: 12px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Luggage Breakdown</h3>
+            ${renderBags(true)}
+
+            <div style="margin-top: 25px; padding-top: 20px; border-top: 2px dashed #e5e7eb; text-align: right;">
+              <p style="margin: 0; font-size: 11px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Total Paid</p>
+              <p style="margin: 5px 0 0 0; font-size: 32px; font-weight: 900; color: #064e3b;">€${totalPrice.toFixed(2)}</p>
+              <p style="margin: 5px 0 0 0; font-size: 11px; font-weight: 700; color: #059669;">✅ Payment Verified (Ref: #${bookingRef})</p>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 30px;">
+            <h3 style="font-size: 12px; font-weight: 800; color: #9ca3af; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 0.05em;">Customer Details</h3>
+            <div style="padding-left: 10px; border-left: 4px solid #064e3b;">
+              <p style="margin: 0; font-size: 16px; font-weight: 800;">${customerName}</p>
+              <p style="margin: 2px 0 0 0; font-size: 14px; color: #4b5563;">${customerEmail}</p>
+              <p style="margin: 4px 0 0 0; font-size: 14px; font-weight: 600; color: #064e3b;">${customerPhone}</p>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-top: 40px; text-align: center;">
+            <a href="${pdfUrl}" style="background-color: #064e3b; color: #ffffff; padding: 16px 20px; text-decoration: none; border-radius: 12px; font-weight: 800; font-size: 14px; flex: 1; display: inline-block;">Download PDF Receipt</a>
+            <a href="${viewUrl}" style="background-color: #ffffff; color: #111827; border: 2px solid #111827; padding: 14px 20px; text-decoration: none; border-radius: 12px; font-weight: 800; font-size: 14px; flex: 1; display: inline-block;">View Booking</a>
+          </div>
+
+          <div style="margin-top: 30px; padding: 15px; background-color: #fffbeb; border: 1px solid #fde68a; border-radius: 12px;">
+             <p style="margin: 0; font-size: 13px; color: #92400e; font-weight: 700; text-align: center;">Operational Note: Prepare storage space for ${customerName} before arrival.</p>
+          </div>
+        </div>
+
+        <div style="background-color: #f3f4f6; padding: 30px; text-align: center; border-top: 1px solid #e5e7eb;">
+          <p style="margin: 0; font-size: 12px; color: #111827; font-weight: 700;">Luggage Deposit Rome</p>
+          <p style="margin: 4px 0 0 0; font-size: 11px; color: #6b7280;">Via Gioberti, 42 &bull; Roma Termini</p>
+          <p style="margin: 10px 0 0 0; font-size: 10px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">&copy; ${new Date().getFullYear()} Operation Dashboard</p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  try {
+    const attachments = pdfBuffer ? [
+      {
+        filename: `booking-confirmation-${bookingRef}.pdf`,
+        content: pdfBuffer,
+      }
+    ] : [];
+
+    if (customerEmail) {
+      await resend.emails.send({
+        from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
+        to: customerEmail,
+        subject: `Booking Confirmed – Luggage Deposit Rome (Ref: #${bookingRef})`,
+        html: customerHtml,
+        attachments,
+      });
+    }
+
+    await resend.emails.send({
+      from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
+      to: process.env.EMAIL_TO_OWNER || 'valigeriagioberti@gmail.com',
+      subject: `New Paid Booking – Ref: #${bookingRef} (${customerName})`,
+      html: ownerHtml,
+      attachments,
+    });
+  } catch (error) {
+    console.error('Error sending emails via Resend:', error);
+  }
+}
