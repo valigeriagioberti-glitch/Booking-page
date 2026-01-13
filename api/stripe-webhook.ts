@@ -1,4 +1,3 @@
-
 import Stripe from 'stripe';
 import { Resend } from 'resend';
 import { Buffer } from 'buffer';
@@ -262,38 +261,44 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
             <p style="font-size: 16px; margin-top: 0;">Hi <strong>${customerName}</strong>,</p>
             <p style="color: #4b5563; font-size: 15px;">Your luggage storage has been successfully reserved. We look forward to seeing you in Rome!</p>
             
-            <div style="margin: 30px 0; padding: 25px; background-color: #fdfdfd; border: 1px solid #f3f4f6; border-radius: 16px;">
-              <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+            <div style="margin: 30px 0; padding: 25px; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 20px;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; border-bottom: 1px solid #e5e7eb; padding-bottom: 15px;">
                 <div>
                   <p style="margin: 0; font-size: 11px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Reference</p>
-                  <p style="margin: 4px 0 0 0; font-family: monospace; font-size: 16px; font-weight: bold; color: #064e3b;">#${bookingRef}</p>
+                  <p style="margin: 4px 0 0 0; font-family: monospace; font-size: 18px; font-weight: bold; color: #064e3b;">#${bookingRef}</p>
                 </div>
               </div>
 
-              <table style="width: 100%; border-collapse: collapse;">
+              <h3 style="margin: 0 0 15px 0; font-size: 13px; font-weight: 800; color: #111827; text-transform: uppercase; letter-spacing: 0.05em;">Booking Summary</h3>
+              
+              <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
                 <tr>
-                  <td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Drop-off</td>
-                  <td style="padding: 8px 0; color: #111827; font-size: 13px; text-align: right; font-weight: 600;">${dropOffDate} @ ${dropOffTime}</td>
+                  <td style="padding: 6px 0; color: #6b7280; font-size: 13px;">Drop-off time</td>
+                  <td style="padding: 6px 0; color: #111827; font-size: 13px; text-align: right; font-weight: 700;">${dropOffTime}</td>
                 </tr>
                 <tr>
-                  <td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Pick-up</td>
-                  <td style="padding: 8px 0; color: #111827; font-size: 13px; text-align: right; font-weight: 600;">${pickUpDate} @ ${pickUpTime}</td>
+                  <td style="padding: 6px 0; color: #6b7280; font-size: 13px;">Pick-up time</td>
+                  <td style="padding: 6px 0; color: #111827; font-size: 13px; text-align: right; font-weight: 700;">${pickUpTime}</td>
                 </tr>
                 <tr>
-                  <td style="padding: 8px 0; color: #6b7280; font-size: 13px;">Duration</td>
-                  <td style="padding: 8px 0; color: #064e3b; font-size: 13px; text-align: right; font-weight: 800;">${billableDays} Day(s)</td>
+                  <td style="padding: 6px 0; color: #6b7280; font-size: 13px;">Total Duration</td>
+                  <td style="padding: 6px 0; color: #064e3b; font-size: 13px; text-align: right; font-weight: 800;">${billableDays} Day(s)</td>
                 </tr>
               </table>
 
-              <div style="margin: 20px 0; border-top: 2px dashed #f3f4f6;"></div>
-              
-              <table style="width: 100%; border-collapse: collapse;">
-                ${renderBags(false)}
-                <tr>
-                  <td style="padding: 20px 0 0 0; color: #064e3b; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;">Total Paid</td>
-                  <td style="padding: 20px 0 0 0; color: #111827; font-size: 24px; font-weight: 900; text-align: right;">€${totalPrice.toFixed(2)}</td>
-                </tr>
-              </table>
+              <div style="background-color: #064e3b; border-radius: 12px; padding: 16px; color: #ffffff; text-align: center; margin-bottom: 25px;">
+                <p style="margin: 0; font-size: 14px; font-weight: 800;">Drop-off: ${formattedDropOffDate} – ${dropOffTime}</p>
+                <p style="margin: 6px 0 0 0; font-size: 14px; font-weight: 800;">Pick-up: ${formattedPickUpDate} – ${pickUpTime}</p>
+              </div>
+
+              <h3 style="margin: 20px 0 12px 0; font-size: 11px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Luggage Breakdown</h3>
+              ${renderBags(true)}
+
+              <div style="margin-top: 25px; padding-top: 20px; border-top: 2px dashed #e5e7eb; text-align: right;">
+                <p style="margin: 0; font-size: 11px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Total Paid</p>
+                <p style="margin: 5px 0 0 0; font-size: 28px; font-weight: 900; color: #064e3b;">€${totalPrice.toFixed(2)}</p>
+                <p style="margin: 5px 0 0 0; font-size: 11px; font-weight: 700; color: #059669;">✅ Payment Verified</p>
+              </div>
             </div>
 
             <div style="margin-bottom: 30px;">
