@@ -217,13 +217,14 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
       }).join('');
   };
 
-  const renderCustomerChips = () => {
+  const renderCustomerLuggageCards = () => {
     return Object.entries(quantities)
       .filter(([_, qty]) => (qty as number) > 0)
       .map(([size, qty]) => {
         return `
-          <div style="display: inline-block; background-color: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 8px; padding: 6px 12px; margin: 0 6px 6px 0; font-size: 13px; font-weight: 700; color: #374151;">
-            ${size} &times; ${qty}
+          <div style="display: inline-block; background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 10px 14px; margin: 0 8px 8px 0; min-width: 100px;">
+            <span style="font-size: 16px; margin-right: 6px;">🧳</span>
+            <span style="font-size: 12px; font-weight: 800; color: #111827; text-transform: uppercase;">${size} &times; ${qty}</span>
           </div>
         `;
       }).join('');
@@ -237,15 +238,8 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <style>
         @media screen and (max-width: 480px) {
-          .show-on-mobile {
-            display: block !important;
-            max-height: none !important;
-            overflow: visible !important;
-            mso-hide: none !important;
-          }
-          .hide-on-mobile {
-            display: none !important;
-          }
+          .show-on-mobile { display: block !important; max-height: none !important; overflow: visible !important; mso-hide: none !important; }
+          .hide-on-mobile { display: none !important; }
         }
       </style>
     </head>
@@ -261,40 +255,66 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
             <p style="font-size: 16px; margin: 0 0 8px 0;">Hi <strong>${customerName}</strong>,</p>
             <p style="color: #4b5563; font-size: 15px; margin: 0;">Your reservation is confirmed. We look forward to seeing you!</p>
             
-            <div style="margin: 24px 0; padding: 20px; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 20px;">
-              <div style="margin-bottom: 16px; border-bottom: 1px solid #e5e7eb; padding-bottom: 12px;">
+            <div style="margin: 24px 0; padding: 24px; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 20px;">
+              <div style="margin-bottom: 20px; border-bottom: 1px solid #e5e7eb; padding-bottom: 15px;">
                 <p style="margin: 0; font-size: 11px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Reference</p>
-                <p style="margin: 4px 0 0 0; font-family: monospace; font-size: 16px; font-weight: bold; color: #064e3b;">#${bookingRef}</p>
+                <p style="margin: 4px 0 0 0; font-family: monospace; font-size: 18px; font-weight: bold; color: #064e3b;">#${bookingRef}</p>
               </div>
 
-              <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
+              <h3 style="margin: 0 0 15px 0; font-size: 12px; font-weight: 900; color: #111827; text-transform: uppercase; letter-spacing: 0.05em;">Storage Schedule</h3>
+              
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 12px;">
                 <tr>
-                  <td style="padding: 4px 0; color: #6b7280; font-size: 13px;">Drop-off time</td>
-                  <td style="padding: 4px 0; color: #111827; font-size: 13px; text-align: right; font-weight: 700;">${dropOffTime}</td>
+                  <td style="padding-bottom: 12px; border-bottom: 1px solid #f1f5f9;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td width="36" valign="middle">
+                          <div style="width: 28px; height: 28px; background-color: #ecfdf5; border-radius: 14px; text-align: center; line-height: 28px; color: #059669; font-size: 14px;">↓</div>
+                        </td>
+                        <td valign="middle">
+                          <span style="font-size: 10px; font-weight: 800; color: #9ca3af; text-transform: uppercase; display: block; line-height: 1;">FROM</span>
+                          <span style="font-size: 14px; font-weight: 700; color: #111827;">${formattedDropOffDate}</span>
+                        </td>
+                        <td align="right" valign="middle">
+                          <span style="background-color: #064e3b; color: #ffffff; padding: 4px 10px; border-radius: 8px; font-size: 13px; font-weight: 800;">${dropOffTime}</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
                 </tr>
                 <tr>
-                  <td style="padding: 4px 0; color: #6b7280; font-size: 13px;">Pick-up time</td>
-                  <td style="padding: 4px 0; color: #111827; font-size: 13px; text-align: right; font-weight: 700;">${pickUpTime}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 4px 0; color: #6b7280; font-size: 13px;">Total Duration</td>
-                  <td style="padding: 4px 0; color: #064e3b; font-size: 13px; text-align: right; font-weight: 800;">${billableDays} Day(s)</td>
+                  <td style="padding: 12px 0; border-bottom: 1px solid #f1f5f9;">
+                    <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td width="36" valign="middle">
+                          <div style="width: 28px; height: 28px; background-color: #fff1f2; border-radius: 14px; text-align: center; line-height: 28px; color: #e11d48; font-size: 14px;">↑</div>
+                        </td>
+                        <td valign="middle">
+                          <span style="font-size: 10px; font-weight: 800; color: #9ca3af; text-transform: uppercase; display: block; line-height: 1;">UNTIL</span>
+                          <span style="font-size: 14px; font-weight: 700; color: #111827;">${formattedPickUpDate}</span>
+                        </td>
+                        <td align="right" valign="middle">
+                          <span style="background-color: #374151; color: #ffffff; padding: 4px 10px; border-radius: 8px; font-size: 13px; font-weight: 800;">${pickUpTime}</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
                 </tr>
               </table>
 
-              <div style="background-color: #064e3b; border-radius: 12px; padding: 14px; color: #ffffff; text-align: center; margin-bottom: 16px;">
-                <p style="margin: 0; font-size: 15px; font-weight: 700; line-height: 1.2;">Drop-off: ${formattedDropOffDate}, ${dropOffTime}</p>
-                <p style="margin: 4px 0 0 0; font-size: 15px; font-weight: 700; line-height: 1.2;">Pick-up: ${formattedPickUpDate}, ${pickUpTime}</p>
+              <div style="display: inline-block; background-color: #064e3b; color: #ffffff; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 24px;">
+                <!-- Fixed: billableDays is a string from Stripe metadata, compare to '1' instead of 1 -->
+                ${billableDays} ${billableDays === '1' ? 'DAY' : 'DAYS'}
               </div>
 
-              <div style="margin-bottom: 16px;">
-                <p style="margin: 0 0 8px 0; font-size: 11px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Luggage</p>
-                <div style="line-height: 1;">${renderCustomerChips()}</div>
+              <h3 style="margin: 0 0 12px 0; font-size: 11px; font-weight: 900; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Luggage Details</h3>
+              <div style="line-height: 1;">
+                ${renderCustomerLuggageCards()}
               </div>
 
-              <div style="margin-top: 20px; padding-top: 16px; border-top: 2px dashed #e5e7eb; text-align: right;">
+              <div style="margin-top: 25px; padding-top: 20px; border-top: 2px dashed #e5e7eb; text-align: right;">
                 <p style="margin: 0; font-size: 11px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Total Paid</p>
-                <p style="margin: 4px 0 0 0; font-size: 24px; font-weight: 900; color: #064e3b;">€${totalPrice.toFixed(2)}</p>
+                <p style="margin: 4px 0 0 0; font-size: 28px; font-weight: 900; color: #064e3b;">€${totalPrice.toFixed(2)}</p>
                 <p style="margin: 4px 0 0 0; font-size: 11px; font-weight: 700; color: #059669;">✅ Payment Verified</p>
               </div>
             </div>
