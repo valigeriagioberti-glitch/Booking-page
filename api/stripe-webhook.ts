@@ -4,20 +4,6 @@ import { Buffer } from 'buffer';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { format } from 'date-fns';
 import { parseISO } from 'date-fns/parseISO';
-import * as admin from 'firebase-admin';
-
-// Initialize Firebase Admin
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    }),
-  });
-}
-
-const db = admin.firestore();
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2023-10-16' as any,
@@ -141,50 +127,6 @@ async function generateBookingPdfBuffer(session: Stripe.Checkout.Session) {
   return Buffer.from(pdfBytes);
 }
 
-async function saveBookingToFirestore(session: Stripe.Checkout.Session) {
-  const metadata = session.metadata || {};
-  const bookingRef = metadata.bookingRef || session.id.substring(session.id.length - 8).toUpperCase();
-  const quantities = JSON.parse(metadata.quantities || '{}');
-
-  const bookingData = {
-    bookingRef,
-    stripeSessionId: session.id,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    customer: {
-      name: metadata.customerName || '—',
-      email: session.customer_details?.email || '—',
-      phone: metadata.customerPhone || '—',
-    },
-    dropOff: {
-      date: metadata.dropOffDate || '—',
-      time: metadata.dropOffTime || '—',
-    },
-    pickUp: {
-      date: metadata.pickUpDate || '—',
-      time: metadata.pickUpTime || '—',
-    },
-    billableDays: parseInt(metadata.billableDays || '1', 10),
-    bags: {
-      small: quantities.Small || 0,
-      medium: quantities.Medium || 0,
-      large: quantities.Large || 0,
-    },
-    totalPaid: (session.amount_total || 0) / 100,
-    currency: session.currency?.toUpperCase() || 'EUR',
-    status: 'paid',
-    notes: '',
-  };
-
-  try {
-    // Use bookingRef as document ID to avoid duplicates
-    await db.collection('bookings').doc(bookingRef).set(bookingData, { merge: true });
-    console.log(`Booking ${bookingRef} successfully saved to Firestore.`);
-  } catch (error) {
-    console.error('Error saving booking to Firestore:', error);
-    throw error;
-  }
-}
-
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     return res.status(405).end('Method Not Allowed');
@@ -209,11 +151,7 @@ export default async function handler(req: any, res: any) {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
     if (session.payment_status === 'paid') {
-      // Execute firestore save and email dispatch
-      await Promise.all([
-        saveBookingToFirestore(session),
-        handleSuccessfulPayment(session)
-      ]);
+      await handleSuccessfulPayment(session);
     }
   }
 
@@ -365,6 +303,7 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
               </table>
 
               <div style="display: inline-block; background-color: #064e3b; color: #ffffff; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 24px;">
+                <!-- Fixed: billableDays is a string from Stripe metadata, compare to '1' instead of 1 -->
                 ${billableDays} ${billableDays === '1' ? 'DAY' : 'DAYS'}
               </div>
 
