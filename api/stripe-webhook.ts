@@ -5,15 +5,14 @@ import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { format } from 'date-fns';
 import { parseISO } from 'date-fns/parseISO';
 import admin from 'firebase-admin';
+import jwt from 'jsonwebtoken';
 
-// A) Fix firebase-admin initialization (Singleton Guard)
-// We use the correct import style and check apps.length safely.
+// Initialize Firebase Admin (Singleton Guard)
 if (!admin.apps.length) {
   const projectId = process.env.FIREBASE_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
   const privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
-  // B) Safe environment variable checks without using .length
   if (projectId && clientEmail && privateKey) {
     try {
       admin.initializeApp({
@@ -197,7 +196,6 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
   const billableDaysRaw = metadata.billableDays || '1';
   const siteUrl = metadata.siteUrl || 'https://booking.luggagedepositrome.com';
   
-  // Safe parse quantities
   let quantities: Record<string, number> = {};
   try {
     const raw = metadata.quantities || '{}';
@@ -212,7 +210,26 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
 
   console.log("Processing successful payment for bookingRef", bookingRef, "session", session.id);
 
-  // Firestore Sync (Isolated Task)
+  // 1. Generate Secure Check-in JWT and QR
+  const checkinSecret = process.env.CHECKIN_JWT_SECRET;
+  let scanUrl = "";
+  let qrUrl = "";
+
+  if (checkinSecret) {
+    try {
+      const checkinToken = jwt.sign(
+        { type: "checkin", bookingId: bookingRef, bookingRef },
+        checkinSecret,
+        { expiresIn: "7d" }
+      );
+      scanUrl = `https://dashboard.luggagedepositrome.com/#/scan?token=${encodeURIComponent(checkinToken)}`;
+      qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(scanUrl)}&color=064e3b`;
+    } catch (jwtErr) {
+      console.error("Failed to generate check-in token:", jwtErr);
+    }
+  }
+
+  // 2. Firestore Sync (Isolated Task)
   const db = getDb();
   if (db) {
     try {
@@ -244,7 +261,8 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
         totalPaid: totalPrice,
         currency: session.currency?.toUpperCase() || 'EUR',
         status: "paid",
-        notes: ""
+        notes: "",
+        checkinUrl: scanUrl // Store the dashboard link for reference
       };
 
       await db.collection('bookings').doc(bookingRef).set(bookingData, { merge: true });
@@ -254,7 +272,7 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
     }
   }
 
-  // Email Notification Task
+  // 3. Email Notification Task
   const walletUrl = `${siteUrl}/api/google-wallet?session_id=${session.id}`;
   const desktopRedirectUrl = `${siteUrl}/api/r?session_id=${session.id}`;
   const viewUrl = `${siteUrl}/#/success?session_id=${session.id}`;
@@ -311,6 +329,19 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
       }).join('');
   };
 
+  const qrSection = qrUrl ? `
+    <div style="margin: 24px 0; padding: 24px; border: 2px solid #064e3b; border-radius: 20px; text-align: center; background-color: #ffffff;">
+      <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 800; color: #064e3b; text-transform: uppercase; letter-spacing: 0.05em;">Show this QR at drop-off</h3>
+      <p style="margin: 0 0 20px 0; font-size: 13px; color: #4b5563;">For a fast check-in, please present this code to our staff when you arrive at the counter.</p>
+      <div style="display: inline-block; padding: 12px; background-color: #f9fafb; border-radius: 16px; border: 1px solid #e5e7eb;">
+        <img src="${qrUrl}" alt="Check-in QR Code" width="180" height="180" style="display: block; border: 0;" />
+      </div>
+      <div style="margin-top: 20px;">
+        <a href="${scanUrl}" style="font-size: 12px; color: #064e3b; font-weight: 700; text-decoration: underline;">Open Digital Check-in Pass</a>
+      </div>
+    </div>
+  ` : '';
+
   const customerHtml = `
     <!DOCTYPE html>
     <html>
@@ -334,6 +365,9 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
           <div style="padding: 30px 24px;">
             <p style="font-size: 16px; margin: 0 0 8px 0;">Hi <strong>${customerName}</strong>,</p>
             <p style="color: #4b5563; font-size: 15px; margin: 0;">Your reservation is confirmed. We look forward to seeing you!</p>
+            
+            ${qrSection}
+
             <div style="margin: 24px 0; padding: 24px; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 20px;">
               <div style="margin-bottom: 20px; border-bottom: 1px solid #e5e7eb; padding-bottom: 15px;">
                 <p style="margin: 0; font-size: 11px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em;">Reference</p>
