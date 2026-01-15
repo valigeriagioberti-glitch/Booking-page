@@ -6,23 +6,33 @@ import { format } from 'date-fns';
 import { parseISO } from 'date-fns/parseISO';
 import * as admin from 'firebase-admin';
 
-// Initialize Firebase Admin (Singleton)
-if (!admin.apps.length) {
-  try {
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      }),
-    });
-    console.log('[Firebase] Admin initialized successfully');
-  } catch (e) {
-    console.error('[Firebase] Initialization error:', e);
+// Initialize Firebase Admin (Singleton Guard)
+// Robust check to prevent "TypeError: Cannot read properties of undefined (reading 'length')"
+const apps = admin.apps || [];
+if (apps.length === 0) {
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+
+  if (projectId && clientEmail && privateKey) {
+    try {
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId,
+          clientEmail,
+          privateKey: privateKey.replace(/\\n/g, '\n'),
+        }),
+      });
+      console.log('[Firebase] Admin initialized successfully');
+    } catch (e) {
+      console.error('[Firebase] Initialization error:', e);
+    }
+  } else {
+    console.warn('[Firebase] Warning: Missing credentials. Firestore writes will be disabled.');
   }
 }
 
-const db = admin.firestore();
+const db = admin.apps.length > 0 ? admin.firestore() : null;
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2023-10-16' as any,
 });
@@ -169,7 +179,6 @@ export default async function handler(req: any, res: any) {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
     if (session.payment_status === 'paid') {
-      // Execute consolidated payment processing
       await handleSuccessfulPayment(session);
     }
   }
@@ -189,7 +198,6 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
   const billableDaysRaw = metadata.billableDays || '1';
   const siteUrl = metadata.siteUrl || 'https://booking.luggagedepositrome.com';
   
-  // HOTFIX: Safe parse quantities
   let quantities: Record<string, number> = {};
   try {
     const raw = metadata.quantities || '{}';
@@ -202,55 +210,48 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
   const totalPrice = (session.amount_total || 0) / 100;
   const bookingRef = metadata.bookingRef || session.id.substring(session.id.length - 8).toUpperCase();
 
-  // Log before starting tasks
   console.log("Processing successful payment for bookingRef", bookingRef, "session", session.id);
 
-  /**
-   * TASK 1: FIRESTORE WRITE (Server-side)
-   * Isolated in try/catch to prevent blocking emails.
-   */
-  try {
-    const bookingData = {
-      bookingRef,
-      stripeSessionId: session.id,
-      paymentIntentId: typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id || '—',
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      customer: {
-        name: customerName,
-        email: customerEmail || '—',
-        phone: customerPhone,
-      },
-      dropOff: {
-        date: dropOffDate,
-        time: dropOffTime,
-      },
-      pickUp: {
-        date: pickUpDate,
-        time: pickUpTime,
-      },
-      billableDays: parseInt(String(billableDaysRaw), 10) || 1,
-      bags: {
-        small: quantities.Small || 0,
-        medium: quantities.Medium || 0,
-        large: quantities.Large || 0,
-      },
-      totalPaid: totalPrice,
-      currency: session.currency?.toUpperCase() || 'EUR',
-      status: "paid",
-      notes: ""
-    };
+  if (db) {
+    try {
+      const bookingData = {
+        bookingRef,
+        stripeSessionId: session.id,
+        paymentIntentId: typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id || '—',
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        customer: {
+          name: customerName,
+          email: customerEmail || '—',
+          phone: customerPhone,
+        },
+        dropOff: {
+          date: dropOffDate,
+          time: dropOffTime,
+        },
+        pickUp: {
+          date: pickUpDate,
+          time: pickUpTime,
+        },
+        billableDays: parseInt(String(billableDaysRaw), 10) || 1,
+        bags: {
+          small: quantities.Small || 0,
+          medium: quantities.Medium || 0,
+          large: quantities.Large || 0,
+        },
+        totalPaid: totalPrice,
+        currency: session.currency?.toUpperCase() || 'EUR',
+        status: "paid",
+        notes: ""
+      };
 
-    await db.collection('bookings').doc(bookingRef).set(bookingData, { merge: true });
-    console.log(`Firestore write success bookingRef=${bookingRef}`);
-  } catch (err: any) {
-    console.error(`Firestore write failed bookingRef=${bookingRef}`, err.message);
+      await db.collection('bookings').doc(bookingRef).set(bookingData, { merge: true });
+      console.log(`Firestore write success bookingRef=${bookingRef}`);
+    } catch (err: any) {
+      console.error(`Firestore write failed bookingRef=${bookingRef}`, err.message);
+    }
   }
 
-  /**
-   * TASK 2: EMAIL NOTIFICATIONS
-   * Existing email logic remains unchanged below.
-   */
   const walletUrl = `${siteUrl}/api/google-wallet?session_id=${session.id}`;
   const desktopRedirectUrl = `${siteUrl}/api/r?session_id=${session.id}`;
   const viewUrl = `${siteUrl}/#/success?session_id=${session.id}`;
