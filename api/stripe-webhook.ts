@@ -6,7 +6,7 @@ import { format } from 'date-fns';
 import { parseISO } from 'date-fns/parseISO';
 import * as admin from 'firebase-admin';
 
-// Initialize Firebase Admin (Server-side Only)
+// Initialize Firebase Admin
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert({
@@ -44,61 +44,6 @@ const PRICING_RULES: Record<string, number> = {
   'Medium': 6,
   'Large': 7
 };
-
-/**
- * Saves the successful booking to Firestore for the Admin Dashboard.
- */
-async function saveBookingToFirestore(session: Stripe.Checkout.Session) {
-  const metadata = session.metadata || {};
-  const bookingRef = metadata.bookingRef || session.id.substring(session.id.length - 8).toUpperCase();
-  let quantities = { Small: 0, Medium: 0, Large: 0 };
-  
-  try {
-    quantities = JSON.parse(metadata.quantities || '{}');
-  } catch (e) {
-    console.error('[Firestore] Metadata parsing error:', e);
-  }
-
-  const bookingData = {
-    bookingRef,
-    stripeSessionId: session.id,
-    paymentIntentId: typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id || '—',
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    customer: {
-      name: metadata.customerName || '—',
-      email: session.customer_details?.email || '—',
-      phone: metadata.customerPhone || '—',
-    },
-    dropOff: {
-      date: metadata.dropOffDate || '—',
-      time: metadata.dropOffTime || '—',
-    },
-    pickUp: {
-      date: metadata.pickUpDate || '—',
-      time: metadata.pickUpTime || '—',
-    },
-    billableDays: parseInt(metadata.billableDays || '1', 10),
-    bags: {
-      small: quantities.Small || 0,
-      medium: quantities.Medium || 0,
-      large: quantities.Large || 0,
-    },
-    totalPaid: (session.amount_total || 0) / 100,
-    currency: session.currency?.toUpperCase() || 'EUR',
-    status: 'paid',
-    notes: '',
-  };
-
-  try {
-    // Write to collection "bookings" with deterministic doc id
-    await db.collection('bookings').doc(bookingRef).set(bookingData, { merge: true });
-    console.log(`[Firestore] Success: Booking #${bookingRef} saved to Firestore.`);
-  } catch (error) {
-    console.error(`[Firestore] Failure: Could not save booking #${bookingRef}:`, error);
-    throw error;
-  }
-}
 
 async function generateBookingPdfBuffer(session: Stripe.Checkout.Session) {
   const metadata = session.metadata || {};
@@ -196,6 +141,50 @@ async function generateBookingPdfBuffer(session: Stripe.Checkout.Session) {
   return Buffer.from(pdfBytes);
 }
 
+async function saveBookingToFirestore(session: Stripe.Checkout.Session) {
+  const metadata = session.metadata || {};
+  const bookingRef = metadata.bookingRef || session.id.substring(session.id.length - 8).toUpperCase();
+  const quantities = JSON.parse(metadata.quantities || '{}');
+
+  const bookingData = {
+    bookingRef,
+    stripeSessionId: session.id,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    customer: {
+      name: metadata.customerName || '—',
+      email: session.customer_details?.email || '—',
+      phone: metadata.customerPhone || '—',
+    },
+    dropOff: {
+      date: metadata.dropOffDate || '—',
+      time: metadata.dropOffTime || '—',
+    },
+    pickUp: {
+      date: metadata.pickUpDate || '—',
+      time: metadata.pickUpTime || '—',
+    },
+    billableDays: parseInt(metadata.billableDays || '1', 10),
+    bags: {
+      small: quantities.Small || 0,
+      medium: quantities.Medium || 0,
+      large: quantities.Large || 0,
+    },
+    totalPaid: (session.amount_total || 0) / 100,
+    currency: session.currency?.toUpperCase() || 'EUR',
+    status: 'paid',
+    notes: '',
+  };
+
+  try {
+    // Use bookingRef as document ID to avoid duplicates
+    await db.collection('bookings').doc(bookingRef).set(bookingData, { merge: true });
+    console.log(`Booking ${bookingRef} successfully saved to Firestore.`);
+  } catch (error) {
+    console.error('Error saving booking to Firestore:', error);
+    throw error;
+  }
+}
+
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     return res.status(405).end('Method Not Allowed');
@@ -220,7 +209,7 @@ export default async function handler(req: any, res: any) {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
     if (session.payment_status === 'paid') {
-      // Execute firestore sync and email notifications
+      // Execute firestore save and email dispatch
       await Promise.all([
         saveBookingToFirestore(session),
         handleSuccessfulPayment(session)
