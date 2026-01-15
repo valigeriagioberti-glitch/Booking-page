@@ -86,16 +86,16 @@ export default async function handler(req: any, res: any) {
       success_url: `${siteUrl}/#/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/#/`,
       metadata: {
-        bookingRef, // Store the generated ref
-        customerName,
-        customerPhone,
-        dropOffDate,
-        dropOffTime,
-        pickUpDate,
-        pickUpTime,
-        quantities: JSON.stringify(quantities),
-        billableDays: billableDays.toString(),
-        siteUrl
+        bookingRef: String(bookingRef),
+        customerName: String(customerName),
+        customerPhone: String(customerPhone),
+        dropOffDate: String(dropOffDate),
+        dropOffTime: String(dropOffTime),
+        pickUpDate: String(pickUpDate),
+        pickUpTime: String(pickUpTime),
+        quantities: JSON.stringify(quantities), // Important: Valid JSON string
+        billableDays: String(billableDays),
+        siteUrl: String(siteUrl)
       },
     });
 
