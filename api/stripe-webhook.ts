@@ -5,7 +5,6 @@ import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { format } from 'date-fns';
 import { parseISO } from 'date-fns/parseISO';
 import admin from 'firebase-admin';
-import jwt from 'jsonwebtoken';
 
 // Initialize Firebase Admin (Singleton Guard)
 if (!admin.apps.length) {
@@ -210,24 +209,9 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
 
   console.log("Processing successful payment for bookingRef", bookingRef, "session", session.id);
 
-  // 1. Generate Secure Check-in JWT and QR
-  const checkinSecret = process.env.CHECKIN_JWT_SECRET;
-  let scanUrl = "";
-  let qrUrl = "";
-
-  if (checkinSecret) {
-    try {
-      const checkinToken = jwt.sign(
-        { type: "checkin", bookingId: bookingRef, bookingRef },
-        checkinSecret,
-        { expiresIn: "7d" }
-      );
-      scanUrl = `https://dashboard.luggagedepositrome.com/#/scan?token=${encodeURIComponent(checkinToken)}`;
-      qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(scanUrl)}&color=064e3b`;
-    } catch (jwtErr) {
-      console.error("Failed to generate check-in token:", jwtErr);
-    }
-  }
+  // 1. Generate Check-in QR (Using bookingRef, NOT JWT)
+  const scanUrl = `https://dashboard.luggagedepositrome.com/#/scan?ref=${encodeURIComponent(bookingRef)}`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(scanUrl)}&color=064e3b`;
 
   // 2. Firestore Sync (Isolated Task)
   const db = getDb();
@@ -262,7 +246,7 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
         currency: session.currency?.toUpperCase() || 'EUR',
         status: "paid",
         notes: "",
-        checkinUrl: scanUrl // Store the dashboard link for reference
+        checkinUrl: scanUrl
       };
 
       await db.collection('bookings').doc(bookingRef).set(bookingData, { merge: true });
@@ -329,18 +313,18 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
       }).join('');
   };
 
-  const qrSection = qrUrl ? `
+  const qrSection = `
     <div style="margin: 24px 0; padding: 24px; border: 2px solid #064e3b; border-radius: 20px; text-align: center; background-color: #ffffff;">
-      <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 800; color: #064e3b; text-transform: uppercase; letter-spacing: 0.05em;">Show this QR at drop-off</h3>
-      <p style="margin: 0 0 20px 0; font-size: 13px; color: #4b5563;">For a fast check-in, please present this code to our staff when you arrive at the counter.</p>
+      <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 800; color: #064e3b; text-transform: uppercase; letter-spacing: 0.05em;">Show this QR code at drop-off</h3>
+      <p style="margin: 0 0 20px 0; font-size: 13px; color: #4b5563;">Our staff will scan this code to check you in quickly.</p>
       <div style="display: inline-block; padding: 12px; background-color: #f9fafb; border-radius: 16px; border: 1px solid #e5e7eb;">
         <img src="${qrUrl}" alt="Check-in QR Code" width="180" height="180" style="display: block; border: 0;" />
       </div>
       <div style="margin-top: 20px;">
-        <a href="${scanUrl}" style="font-size: 12px; color: #064e3b; font-weight: 700; text-decoration: underline;">Open Digital Check-in Pass</a>
+        <a href="${scanUrl}" style="font-size: 12px; color: #064e3b; font-weight: 700; text-decoration: underline;">Open check-in link</a>
       </div>
     </div>
-  ` : '';
+  `;
 
   const customerHtml = `
     <!DOCTYPE html>
@@ -413,7 +397,22 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
                 <p style="margin: 4px 0 0 0; font-size: 11px; font-weight: 700; color: #059669;">✅ Payment Verified</p>
               </div>
             </div>
-            <div style="margin-bottom: 24px;">
+            
+            <div style="text-align: center; margin-top: 32px;">
+              <div class="hide-on-mobile" style="margin-bottom: 16px;">
+                <p style="font-size: 13px; color: #6b7280; margin: 0;">
+                  Want a Wallet pass? <a href="${desktopRedirectUrl}" style="color: #0f766e; text-decoration: underline; font-weight: 600;">Open the booking link</a> on mobile.
+                </p>
+              </div>
+
+              <div class="show-on-mobile" style="display:none; max-height:0; overflow:hidden; mso-hide:all;">
+                <a href="${walletUrl}" style="text-decoration: none; display: block; width: 100%; max-width: 320px; margin: 0 auto;">
+                  <img src="https://booking.luggagedepositrome.com/assets/google-wallet/add_to_google_wallet_black.png" alt="Add to Google Wallet" width="320" style="max-width: 100%; height: auto; display: block; border: 0;">
+                </a>
+              </div>
+            </div>
+
+            <div style="margin-top: 32px; border-top: 1px solid #e5e7eb; padding-top: 24px;">
               <h3 style="font-size: 13px; font-weight: 800; color: #111827; margin: 0 0 4px 0; text-transform: uppercase; letter-spacing: 0.05em;">Where to find us:</h3>
               <p style="margin: 0; font-size: 15px; font-weight: 700;">Via Gioberti, 42</p>
               <p style="margin: 2px 0 0 0; color: #6b7280; font-size: 14px;">00185 Roma RM, Italy (near Roma Termini)</p>
