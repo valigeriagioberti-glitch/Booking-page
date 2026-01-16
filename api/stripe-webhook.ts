@@ -320,9 +320,6 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
       <div style="display: inline-block; padding: 12px; background-color: #f9fafb; border-radius: 16px; border: 1px solid #e5e7eb;">
         <img src="${qrUrl}" alt="Check-in QR Code" width="180" height="180" style="display: block; border: 0;" />
       </div>
-      <div style="margin-top: 20px;">
-        <a href="${scanUrl}" style="font-size: 12px; color: #064e3b; font-weight: 700; text-decoration: underline;">Open check-in link</a>
-      </div>
     </div>
   `;
 
