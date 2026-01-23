@@ -52,7 +52,9 @@ export default async function handler(req: any, res: any) {
       const quantities = JSON.parse(metadata.quantities || '{}');
       
       bookingId = session.id;
-      bookingReference = session.id.substring(session.id.length - 8).toUpperCase();
+      // Get the real bookingRef from metadata as the primary reference
+      bookingReference = metadata.bookingRef || session.id.substring(session.id.length - 8).toUpperCase();
+      
       small = quantities.Small || 0;
       medium = quantities.Medium || 0;
       large = quantities.Large || 0;
@@ -112,12 +114,9 @@ export default async function handler(req: any, res: any) {
     const objectIdEncoded = encodeURIComponent(objectId);
     const classId = `${ISSUER_ID}.luggage_deposit_rome_booking`;
 
-    // 4. Construct the Generic Object
-    const refToShow = bookingReference || (bookingId.length >= 8 ? bookingId.substring(bookingId.length - 8).toUpperCase() : bookingId.toUpperCase());
-    
-    const protocol = req.headers['x-forwarded-proto'] || 'https';
-    const host = req.headers.host;
-    const qrRedirectUrl = `${protocol}://${host}/api/r?session_id=${encodeURIComponent(bookingId)}`;
+    // 4. Construct the Dashboard Scan URL for the QR code
+    // This is the specific URL the dashboard scanner expects: .../scan?ref=BOOKINGREF
+    const dashboardScanUrl = `https://dashboard.luggagedepositrome.com/#/scan?ref=${encodeURIComponent(bookingReference)}`;
     const luggageSubheader = `Luggage: S×${small || 0} · M×${medium || 0} · L×${large || 0}`;
 
     const genericObject = {
@@ -136,11 +135,11 @@ export default async function handler(req: any, res: any) {
       hexBackgroundColor: '#064e3b',
       barcode: {
         type: 'QR_CODE',
-        value: qrRedirectUrl,
-        alternateText: `Ref: ${refToShow}`
+        value: dashboardScanUrl,
+        alternateText: `Ref: ${bookingReference}`
       },
       textModulesData: [
-        { header: 'Booking Ref', body: refToShow, id: 'booking_id' },
+        { header: 'Booking Ref', body: bookingReference, id: 'booking_id' },
         { header: 'Drop-off', body: dropOffDate || '—', id: 'drop_off' },
         { header: 'Pick-up', body: pickUpDate || '—', id: 'pick_up' },
         { header: 'Luggage', body: bagsSummary, id: 'bags' }
