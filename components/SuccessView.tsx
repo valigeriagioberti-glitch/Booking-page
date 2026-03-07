@@ -15,20 +15,18 @@ interface SuccessViewProps {
 }
 
 useEffect(() => {
-  // only run on client and if result exists
+  // only run on client side
   if (typeof window === 'undefined') return;
-  if (!result || !(window as any).gtag) return;
 
-  try {
-    (window as any).gtag('event', 'booking_completed', {
+  const w = window as any;
+  if (w.gtag) {
+    w.gtag('event', 'booking_completed', {
       value: 1,
       currency: 'EUR',
       booking_ref: result.bookingRef || result.stripePaymentId
     });
-  } catch (err) {
-    console.error('GA booking_completed error:', err);
   }
-}, []); // run only once on mount
+}, []); // empty array ensures it runs only once on mount
 
 export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, language }) => {
   const t = TRANSLATIONS[language];
