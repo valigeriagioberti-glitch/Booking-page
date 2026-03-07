@@ -14,6 +14,22 @@ interface SuccessViewProps {
   language: Language;
 }
 
+useEffect(() => {
+  // only run on client and if result exists
+  if (typeof window === 'undefined') return;
+  if (!result || !(window as any).gtag) return;
+
+  try {
+    (window as any).gtag('event', 'booking_completed', {
+      value: 1,
+      currency: 'EUR',
+      booking_ref: result.bookingRef || result.stripePaymentId
+    });
+  } catch (err) {
+    console.error('GA booking_completed error:', err);
+  }
+}, []); // run only once on mount
+
 export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, language }) => {
   const t = TRANSLATIONS[language];
   const dateLocale = language === 'it' ? itLocale : enLocale;
