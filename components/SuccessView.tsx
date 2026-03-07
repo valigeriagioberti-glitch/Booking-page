@@ -14,16 +14,6 @@ interface SuccessViewProps {
   language: Language;
 }
 
-useEffect(() => {
-  if (window.gtag) {
-    window.gtag('event', 'booking_completed', {
-      value: 1,
-      currency: 'EUR',
-      booking_ref: result.bookingRef || result.stripePaymentId
-    });
-  }
-}, [result]);
-
 export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, language }) => {
   const t = TRANSLATIONS[language];
   const dateLocale = language === 'it' ? itLocale : enLocale;
