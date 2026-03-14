@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { Calendar, Plus, Minus, CreditCard, User, Mail, Phone, Clock, Info } from 'lucide-react';
+import { Calendar, Plus, Minus, CreditCard, User, Mail, Phone, Clock, Info, Backpack, Briefcase, Luggage, Check } from 'lucide-react';
 import { differenceInDays, format, isValid, isBefore } from 'date-fns';
 import { parseISO } from 'date-fns/parseISO';
 import { startOfDay } from 'date-fns/startOfDay';
@@ -34,8 +34,8 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
 
   const [formData, setFormData] = useState<BookingData>({
     quantities: {
-      [BagSize.SMALL]: 0,
-      [BagSize.MEDIUM]: 1, 
+      [BagSize.SMALL]: 1,
+      [BagSize.MEDIUM]: 0, 
       [BagSize.LARGE]: 0,
     },
     dropOffDate: format(new Date(), 'yyyy-MM-dd'),
@@ -143,11 +143,17 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
     [BagSize.LARGE]: t.booking.largeDesc,
   };
 
+  const bagIcons: Record<BagSize, React.ReactNode> = {
+    [BagSize.SMALL]: <Backpack className="w-5 h-5" />,
+    [BagSize.MEDIUM]: <Briefcase className="w-5 h-5" />,
+    [BagSize.LARGE]: <Luggage className="w-6 h-6" />,
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
       <div className="lg:col-span-2 space-y-12">
         <section>
-          <h2 className="text-xl font-bold text-gray-900 mb-8 flex items-center">
+          <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
             <span className="w-1.5 h-6 bg-green-900 rounded-full mr-3"></span>
             {t.booking.step1}
           </h2>
@@ -159,30 +165,56 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
               return (
                 <div 
                   key={size}
-                  className={`flex items-center justify-between p-6 border rounded-2xl transition-all ${
-                    qty > 0 ? 'border-green-900 bg-green-50/50 shadow-sm' : 'border-gray-200 hover:border-gray-300'
+                  className={`flex flex-col sm:flex-row sm:items-center justify-between p-6 border-2 rounded-2xl transition-all gap-6 ${
+                    qty > 0 ? 'border-green-500 bg-green-50/40 shadow-md' : 'border-gray-100 hover:border-gray-300 bg-white'
                   }`}
                 >
-                  <div className="flex-grow pr-8">
-                    <div className="font-bold text-gray-900">{bagSizeNames[size]}</div>
-                    <div className="text-sm text-gray-500 mt-1 leading-snug">{bagSizeDescriptions[size]}</div>
-                    <div className="text-green-900 font-bold mt-2 text-sm">€{rule.pricePerDay} / {t.booking.perDay}</div>
+                  <div className="flex-grow">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <div className={`p-2 rounded-xl ${qty > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                        {bagIcons[size]}
+                      </div>
+                      <div className="font-bold text-gray-900 text-lg flex items-center">
+                        {bagSizeNames[size]}
+                        {qty > 0 && <Check className="w-5 h-5 text-green-600 ml-2" strokeWidth={3} />}
+                      </div>
+                    </div>
+                    
+                    <div className="mt-2 flex flex-col gap-2">
+                      <span className="text-sm text-gray-600 leading-snug">
+                        {bagSizeDescriptions[size].split('. ')[0]}
+                      </span>
+                      {bagSizeDescriptions[size].split('. ')[1] && (
+                        <div className="flex items-center text-xs text-gray-500 font-medium space-x-1.5">
+                          <Luggage className="w-3.5 h-3.5 opacity-60" />
+                          <span>{bagSizeDescriptions[size].split('. ')[1].replace('.', '')}</span>
+                        </div>
+                      )}
+                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-1">
+                        {t.booking.pricePerBag}
+                      </span>
+                    </div>
+                    
+                    <div className="mt-3 flex items-baseline space-x-1.5">
+                      <span className="text-3xl font-black text-gray-900 tracking-tight">€{rule.pricePerDay}</span>
+                      <span className="text-sm font-medium text-gray-500">/ {t.booking.perDay} {t.booking.perBag}</span>
+                    </div>
                   </div>
                   
-                  <div className="flex-shrink-0 flex items-center space-x-4 bg-white rounded-xl border border-gray-200 p-1.5 h-fit self-center">
+                  <div className="flex-shrink-0 flex items-center space-x-3 bg-gray-50/80 rounded-2xl border border-gray-200/60 p-1.5 h-fit self-start sm:self-center shadow-sm">
                     <button 
                       onClick={() => adjustQuantity(size, -1)}
-                      className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-900 disabled:opacity-20"
+                      className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white hover:shadow-sm active:bg-gray-100 text-gray-900 disabled:opacity-30 transition-all"
                       disabled={qty === 0}
                     >
-                      <Minus className="w-4 h-4"/>
+                      <Minus className="w-5 h-5"/>
                     </button>
-                    <span className="text-lg font-bold text-gray-900 w-6 text-center">{qty}</span>
+                    <span className="text-xl font-bold text-gray-900 w-6 text-center select-none">{qty}</span>
                     <button 
                       onClick={() => adjustQuantity(size, 1)}
-                      className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-900"
+                      className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white hover:shadow-sm active:bg-gray-100 text-gray-900 transition-all"
                     >
-                      <Plus className="w-4 h-4"/>
+                      <Plus className="w-5 h-5"/>
                     </button>
                   </div>
                 </div>

@@ -282,11 +282,6 @@ export const SuccessView: React.FC<SuccessViewProps> = ({ result, onReset, langu
           <ArrowLeft className="w-4 h-4" />
           <span>{t.success.anotherBooking}</span>
         </button>
-        {typeof window !== 'undefined' && (window as any).gtag?.('event', 'booking_completed', {
-  value: 1,
-  currency: 'EUR',
-  booking_ref: result.bookingRef || result.stripePaymentId
-})}
       </div>
     </div>
   );
