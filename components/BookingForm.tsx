@@ -190,9 +190,6 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
                           <span>{bagSizeDescriptions[size].split('. ')[1].replace('.', '')}</span>
                         </div>
                       )}
-                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-1">
-                        {t.booking.pricePerBag}
-                      </span>
                     </div>
                     
                     <div className="mt-3 flex items-baseline space-x-1.5">
