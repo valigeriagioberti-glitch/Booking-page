@@ -1,5 +1,7 @@
 
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { ChevronDown, Check } from 'lucide-react';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { BookingForm } from './components/BookingForm';
@@ -15,6 +17,8 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<ViewState>('booking');
   const [verifyId, setVerifyId] = useState<string | null>(null);
+  const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+  const langMenuRef = useRef<HTMLDivElement>(null);
 
   // Handle URL changes and initial load
   useEffect(() => {
@@ -53,11 +57,22 @@ const App: React.FC = () => {
     handleUrlChange();
 
     const savedLang = localStorage.getItem('ldr_language') as Language;
-    if (savedLang && (savedLang === 'en' || savedLang === 'it')) {
+    if (savedLang && (savedLang === 'en' || savedLang === 'it' || savedLang === 'es')) {
       setLanguage(savedLang);
     }
 
-    return () => window.removeEventListener('hashchange', handleUrlChange);
+    // Click outside handler for language menu
+    const handleClickOutside = (event: MouseEvent) => {
+      if (langMenuRef.current && !langMenuRef.current.contains(event.target as Node)) {
+        setIsLangMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      window.removeEventListener('hashchange', handleUrlChange);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   const verifyStripeSession = async (sessionId: string) => {
@@ -90,6 +105,7 @@ const App: React.FC = () => {
   const toggleLanguage = useCallback((lang: Language) => {
     setLanguage(lang);
     localStorage.setItem('ldr_language', lang);
+    setIsLangMenuOpen(false);
   }, []);
 
   const handleBookingComplete = useCallback((result: BookingResult) => {
@@ -116,8 +132,16 @@ const App: React.FC = () => {
     );
   }
 
+  const languages = [
+    { code: 'en', flag: '🇬🇧', name: 'English', label: 'EN' },
+    { code: 'it', flag: '🇮🇹', name: 'Italiano', label: 'IT' },
+    { code: 'es', flag: '🇪🇸', name: 'Español', label: 'ES' }
+  ];
+
+  const currentLang = languages.find(l => l.code === language) || languages[0];
+
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="flex flex-col min-h-screen bg-white relative">
       <div className="print:hidden">
         <Header language={language} onLanguageToggle={toggleLanguage} />
       </div>
@@ -144,6 +168,55 @@ const App: React.FC = () => {
           <VerifyView bookingId={verifyId} language={language} />
         )}
       </main>
+
+      {/* Sticky Language Switcher - SaaS Redesign */}
+      <div className="fixed bottom-6 right-6 z-[60] print:hidden" ref={langMenuRef}>
+        <div className="relative">
+          <AnimatePresence>
+            {isLangMenuOpen && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 8 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
+                className="absolute bottom-full right-0 mb-2 bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-gray-100 py-1.5 min-w-[160px] overflow-hidden"
+              >
+                {languages.map((lang) => (
+                  <button 
+                    key={lang.code}
+                    onClick={() => toggleLanguage(lang.code as Language)}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 transition-colors group ${
+                      language === lang.code 
+                        ? 'bg-[#f5f5f5] text-gray-900 font-semibold' 
+                        : 'text-gray-600 hover:bg-[#f5f5f5] font-medium'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-lg leading-none">{lang.flag}</span>
+                      <span className="text-[13px]">{lang.name}</span>
+                    </div>
+                    {language === lang.code && (
+                      <Check className="w-3.5 h-3.5 text-gray-900" strokeWidth={3} />
+                    )}
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <button 
+            onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
+            className="flex items-center gap-2 px-2.5 py-1.5 bg-white border border-gray-200 rounded-full shadow-sm hover:bg-gray-50 transition-all active:scale-95 group"
+            title="Change Language"
+          >
+            <div className="flex items-center gap-1.5">
+              <span className="text-lg leading-none">{currentLang.flag}</span>
+              <span className="text-[13px] font-bold text-gray-700 tracking-tight">{currentLang.label}</span>
+            </div>
+            <ChevronDown className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${isLangMenuOpen ? 'rotate-180' : ''}`} />
+          </button>
+        </div>
+      </div>
 
       <div className="print:hidden">
         <Footer language={language} />

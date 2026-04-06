@@ -37,23 +37,6 @@ export const Header: React.FC<HeaderProps> = ({ language, onLanguageToggle }) =>
             <ArrowLeft className="w-4 h-4" />
             <span className="hidden sm:inline">{t.header.returnHome}</span>
           </a>
-
-          <div className="flex items-center bg-gray-50 p-1 rounded-lg border border-gray-100">
-            <button 
-              onClick={() => onLanguageToggle('en')}
-              className={`px-2 py-1 rounded text-lg transition-all ${language === 'en' ? 'bg-white shadow-sm scale-110' : 'opacity-40 grayscale hover:opacity-80'}`}
-              title="English"
-            >
-              🇬🇧
-            </button>
-            <button 
-              onClick={() => onLanguageToggle('it')}
-              className={`px-2 py-1 rounded text-lg transition-all ${language === 'it' ? 'bg-white shadow-sm scale-110' : 'opacity-40 grayscale hover:opacity-80'}`}
-              title="Italiano"
-            >
-              🇮🇹
-            </button>
-          </div>
         </div>
       </div>
     </header>

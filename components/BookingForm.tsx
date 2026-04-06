@@ -161,6 +161,20 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
             <span className="w-1.5 h-6 bg-green-900 rounded-full mr-3"></span>
             {t.booking.step1}
           </h2>
+
+          <div className="flex items-start md:items-center space-x-4 bg-red-50 border border-red-100 p-6 rounded-2xl shadow-sm mb-8">
+            <div className="flex-shrink-0 w-10 h-10 bg-white rounded-full flex items-center justify-center text-red-600 shadow-sm border border-red-50">
+              <Info className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-red-700 text-xs font-black leading-tight mb-0.5 tracking-tight">
+                {t.booking.attentionLabel}
+              </p>
+              <p className="text-red-600 text-[12px] font-bold leading-relaxed">
+                {t.booking.luggageWarning}
+              </p>
+            </div>
+          </div>
           
           <div className="space-y-4">
             {(Object.values(BagSize)).map((size) => {
@@ -235,10 +249,10 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
                 <Info className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-red-700 text-sm font-black leading-tight mb-0.5 tracking-tight">
+                <p className="text-red-700 text-xs font-black leading-tight mb-0.5 tracking-tight">
                   {t.booking.attentionLabel}
                 </p>
-                <p className="text-red-600 text-[13px] font-bold leading-relaxed">
+                <p className="text-red-600 text-[12px] font-bold leading-relaxed">
                   {t.booking.fridayDisclaimer}
                 </p>
               </div>

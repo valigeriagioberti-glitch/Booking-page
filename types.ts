@@ -4,7 +4,7 @@ export enum BagSize {
   LARGE = 'Large'
 }
 
-export type Language = 'en' | 'it';
+export type Language = 'en' | 'it' | 'es';
 
 export interface BookingData {
   quantities: Record<BagSize, number>;

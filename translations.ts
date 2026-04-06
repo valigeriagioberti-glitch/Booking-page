@@ -42,7 +42,8 @@ export const TRANSLATIONS: Record<Language, any> = {
       totalDue: 'Total Due',
       payButton: 'Pay & Reserve',
       fillDetails: 'Please fill in all contact details',
-      secureProcessing: 'Secure processing • Instant Confirmation'
+      secureProcessing: 'Secure processing • Instant Confirmation',
+      luggageWarning: 'Every backpack or luggage item is counted separately. Small bags cannot be grouped as a larger bag.'
     },
     success: {
       confirmed: 'Booking Confirmed ✅',
@@ -128,7 +129,8 @@ export const TRANSLATIONS: Record<Language, any> = {
       totalDue: 'Totale Dovuto',
       payButton: 'Paga e Prenota',
       fillDetails: 'Si prega di inserire tutti i dati di contatto',
-      secureProcessing: 'Elaborazione sicura • Conferma Istantanea'
+      secureProcessing: 'Elaborazione sicura • Conferma Istantanea',
+      luggageWarning: 'Ogni zaino o bagaglio viene contato separatamente. Le borse piccole non possono essere raggruppate come un bagaglio più grande.'
     },
     success: {
       confirmed: 'Prenotazione Confermata ✅',
@@ -172,6 +174,93 @@ export const TRANSLATIONS: Record<Language, any> = {
       findUsMaps: 'Trovaci su Google Maps',
       contact: 'Contatto',
       secureSolutions: 'Soluzioni di Deposito Sicure'
+    }
+  },
+  es: {
+    header: {
+      storage: 'Reserva',
+      booking: 'depósito',
+      returnHome: 'Volver al Inicio'
+    },
+    booking: {
+      title: 'Asegura tu equipaje en Roma',
+      subtitle: 'Reserva online ahora para asegurar tu lugar y saltar la fila.',
+      step1: '1. Selecciona tu equipaje',
+      step2: '2. Fechas de depósito y contacto',
+      attentionLabel: 'Atención',
+      fridayDisclaimer: 'Ps. Los viernes cerramos de 12.30 pm a 14.00 pm',
+      lockerDisclaimer: 'Tenga en cuenta que no somos un servicio de taquillas. Los precios se cobran por maleta.',
+      small: 'Pequeño',
+      smallDesc: 'Una maleta pequeña o mochila. Altura máx: 55cm / 20 pulgadas.',
+      medium: 'Mediano',
+      mediumDesc: 'Una maleta mediana o mochila. Altura máx: 70cm / 27 pulgadas.',
+      large: 'Grande',
+      largeDesc: 'Una maleta grande o mochila. Más de 70cm / 27 pulgadas.',
+      pricePerBag: 'Precio por maleta',
+      perBag: 'por maleta',
+      perDay: 'día',
+      dropOff: 'Fecha de entrega (Drop-off)',
+      dropOffTime: 'Hora de entrega (Drop-off)',
+      pickUp: 'Fecha de recogida (Pick-up)',
+      pickUpTime: 'Hora de recogida (Pick-up)',
+      fullName: 'Nombre Completo (Obligatorio)',
+      email: 'Correo Electrónico (Obligatorio)',
+      phone: 'Número de Teléfono (Obligatorio)',
+      summary: 'Resumen de la Reserva',
+      subtotalDay: 'Subtotal / Día',
+      duration: 'Duración',
+      days: 'Días',
+      day: 'Día',
+      from: 'Desde',
+      to: 'hasta',
+      totalDue: 'Total a Pagar',
+      payButton: 'Pagar y Reservar',
+      fillDetails: 'Por favor complete todos los datos de contacto',
+      secureProcessing: 'Procesamiento seguro • Confirmación instantánea',
+      luggageWarning: 'Cada mochila o artículo de equipaje se cuenta por separado. Las maletas pequeñas no pueden agruparse como una maleta más grande.'
+    },
+    success: {
+      confirmed: 'Reserva Confirmada ✅',
+      subtitle: 'Tu reserva de depósito de equipaje está confirmada. Hemos enviado una copia de tu recibo a',
+      resId: 'ID de Reserva',
+      customerDetails: 'Detalles del Cliente',
+      bookedOn: 'Reservado el (Hora de Roma)',
+      schedule: 'Horario de Depósito',
+      until: 'Hasta',
+      storageDays: 'Días de Depósito',
+      dropOffPoint: 'Punto de Entrega',
+      receptionInfo: 'Muestra este recibo en la recepción cuando llegues.',
+      itemized: 'Desglose Detallado',
+      description: 'Descripción',
+      qty: 'Cant',
+      priceDay: 'Precio/Día',
+      subtotalDaily: 'Subtotal Diario:',
+      totalPaid: 'Total Pagado:',
+      bagStorage: 'Depósito de Maletas',
+      thankYou: 'Gracias por elegir Luggage Deposit Rome',
+      visitUs: 'Visítanos en luggagedepositrome.com para más información',
+      print: 'Imprimir Recibo',
+      download: 'Descargar PDF',
+      anotherBooking: 'Hacer otra reserva',
+      confirmationEmail: 'Se ha enviado un correo de confirmación a',
+      addToWallet: 'Añadir a Google Wallet'
+    },
+    verify: {
+      title: 'Verificación de Reserva',
+      loading: 'Verificando detalles de la reserva...',
+      notFound: 'Reserva no encontrada',
+      status: 'Estado de la Reserva',
+      valid: 'Reserva Válida',
+      invalid: 'Inválida o No Pagada',
+      customer: 'Cliente',
+      bags: 'Detalles del Equipaje'
+    },
+    footer: {
+      description: 'Depósito de equipaje seguro, monitoreado y asequible en el corazón de Roma. La forma inteligente de viajar con las manos libres.',
+      information: 'Información',
+      findUsMaps: 'Encuéntranos en Google Maps',
+      contact: 'Contacto',
+      secureSolutions: 'Soluciones de Depósito Seguras'
     }
   }
 };
