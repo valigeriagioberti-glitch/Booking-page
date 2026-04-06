@@ -12,6 +12,7 @@ import { BookingResult, Language, ViewState } from './types';
 import { TRANSLATIONS } from './translations';
 
 const MainApp: React.FC = () => {
+  console.log('[MainApp] Rendering...');
   const { lang } = useParams<{ lang?: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,6 +27,7 @@ const MainApp: React.FC = () => {
 
   // Sync language with URL
   useEffect(() => {
+    console.log('[MainApp] Syncing language with URL:', lang);
     const validLangs: Language[] = ['en', 'it', 'es'];
     if (lang && validLangs.includes(lang as Language)) {
       setLanguage(lang as Language);
@@ -50,6 +52,7 @@ const MainApp: React.FC = () => {
 
   // Handle URL changes and initial load
   useEffect(() => {
+    console.log('[MainApp] Initial load/URL change handler');
     const handleUrlChange = () => {
       const searchParams = new URLSearchParams(window.location.search);
       const hashParams = new URLSearchParams(window.location.hash.includes('?') ? window.location.hash.split('?')[1] : '');
@@ -253,6 +256,7 @@ const MainApp: React.FC = () => {
 };
 
 const App: React.FC = () => {
+  console.log('[App] Rendering routes...');
   return (
     <Routes>
       <Route path="/:lang" element={<MainApp />} />
