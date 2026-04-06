@@ -4,9 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "tsx server.ts",
     "build": "vite build",
-    "preview": "vite preview"
+    "start": "node --import tsx server.ts",
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
     "buffer": "^6.0.3",
