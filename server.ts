@@ -11,6 +11,12 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  // Middleware for logging
+  app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
+  });
+
   // Middleware for parsing JSON (except for Stripe webhooks which need raw body)
   app.use((req, res, next) => {
     if (req.originalUrl === '/api/stripe-webhook') {
@@ -49,25 +55,47 @@ async function startServer() {
     app.use(vite.middlewares);
 
     // SPA Fallback for development
-    app.use('*', async (req, res, next) => {
+    app.get('*', async (req, res, next) => {
+      if (req.originalUrl.startsWith('/api')) {
+        return next();
+      }
+      
       const url = req.originalUrl;
+      console.log(`[Dev] Serving SPA fallback for: ${url}`);
       try {
-        let template = fs.readFileSync(path.resolve(process.cwd(), 'index.html'), 'utf-8');
+        const templatePath = path.resolve(process.cwd(), 'index.html');
+        if (!fs.existsSync(templatePath)) {
+          console.error(`[Dev] index.html not found at ${templatePath}`);
+          return next();
+        }
+        let template = fs.readFileSync(templatePath, 'utf-8');
         template = await vite.transformIndexHtml(url, template);
         res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
       } catch (e) {
+        console.error(`[Dev] SPA Fallback Error:`, e);
         vite.ssrFixStacktrace(e as Error);
         next(e);
       }
     });
   } else {
+    console.log('[Prod] Running in production mode');
     // Production: Serve static files from dist
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
     
     // SPA Fallback: Serve index.html for all other routes
     app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+      if (req.originalUrl.startsWith('/api')) {
+        return res.status(404).json({ error: 'API not found' });
+      }
+      console.log(`[Prod] Serving SPA fallback for: ${req.originalUrl}`);
+      const indexPath = path.join(distPath, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+      } else {
+        console.error(`[Prod] index.html not found at ${indexPath}`);
+        res.status(404).send('Application not built. Please run npm run build.');
+      }
     });
   }
 
