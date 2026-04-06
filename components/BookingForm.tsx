@@ -167,10 +167,10 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
               <Info className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-red-700 text-xs font-black leading-tight mb-0.5 tracking-tight">
+              <p className="text-red-700 text-sm font-black leading-tight mb-0.5 tracking-tight">
                 {t.booking.attentionLabel}
               </p>
-              <p className="text-red-600 text-[12px] font-bold leading-relaxed">
+              <p className="text-red-600 text-[13px] font-bold leading-relaxed">
                 {t.booking.luggageWarning}
               </p>
             </div>
@@ -249,10 +249,10 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
                 <Info className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-red-700 text-xs font-black leading-tight mb-0.5 tracking-tight">
+                <p className="text-red-700 text-sm font-black leading-tight mb-0.5 tracking-tight">
                   {t.booking.attentionLabel}
                 </p>
-                <p className="text-red-600 text-[12px] font-bold leading-relaxed">
+                <p className="text-red-600 text-[13px] font-bold leading-relaxed">
                   {t.booking.fridayDisclaimer}
                 </p>
               </div>
