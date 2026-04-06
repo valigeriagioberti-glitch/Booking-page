@@ -14,7 +14,7 @@ export const TRANSLATIONS: Record<Language, any> = {
       step1: '1. Select your luggage',
       step2: '2. Storage dates & contact',
       attentionLabel: 'Attention',
-      fridayDisclaimer: 'Ps. On fridays we close between 12.30 pm to 14.00 pm',
+      fridayDisclaimer: 'P.S. On Fridays we are closed from 12:30 pm to 2:00 pm.',
       lockerDisclaimer: 'Please note that we are not a locker service. Prices are charged per bag.',
       small: 'Small',
       smallDesc: 'One small suitcase or backpack. Max height: 55cm / 20 inches.',
