@@ -2,6 +2,7 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronDown, Check } from 'lucide-react';
+import { useNavigate, useParams, useLocation, Routes, Route, Navigate } from 'react-router-dom';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { BookingForm } from './components/BookingForm';
@@ -10,7 +11,10 @@ import { VerifyView } from './components/VerifyView';
 import { BookingResult, Language, ViewState } from './types';
 import { TRANSLATIONS } from './translations';
 
-const App: React.FC = () => {
+const MainApp: React.FC = () => {
+  const { lang } = useParams<{ lang?: string }>();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [bookingResult, setBookingResult] = useState<BookingResult | null>(null);
   const [language, setLanguage] = useState<Language>('en');
   const [isVerifying, setIsVerifying] = useState(false);
@@ -19,6 +23,30 @@ const App: React.FC = () => {
   const [verifyId, setVerifyId] = useState<string | null>(null);
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
   const langMenuRef = useRef<HTMLDivElement>(null);
+
+  // Sync language with URL
+  useEffect(() => {
+    const validLangs: Language[] = ['en', 'it', 'es'];
+    if (lang && validLangs.includes(lang as Language)) {
+      setLanguage(lang as Language);
+      localStorage.setItem('ldr_language', lang);
+    } else if (lang) {
+      // Invalid language in URL, redirect to home
+      navigate('/', { replace: true });
+    } else {
+      // If no lang in URL, check localStorage or default to 'en'
+      const savedLang = localStorage.getItem('ldr_language') as Language;
+      if (savedLang && validLangs.includes(savedLang)) {
+        setLanguage(savedLang);
+        // If we have a saved language that is not English, redirect to it
+        if (savedLang !== 'en') {
+          navigate(`/${savedLang}${location.search}${location.hash}`, { replace: true });
+        }
+      } else {
+        setLanguage('en');
+      }
+    }
+  }, [lang, navigate, location.search, location.hash]);
 
   // Handle URL changes and initial load
   useEffect(() => {
@@ -56,11 +84,6 @@ const App: React.FC = () => {
     window.addEventListener('hashchange', handleUrlChange);
     handleUrlChange();
 
-    const savedLang = localStorage.getItem('ldr_language') as Language;
-    if (savedLang && (savedLang === 'en' || savedLang === 'it' || savedLang === 'es')) {
-      setLanguage(savedLang);
-    }
-
     // Click outside handler for language menu
     const handleClickOutside = (event: MouseEvent) => {
       if (langMenuRef.current && !langMenuRef.current.contains(event.target as Node)) {
@@ -89,7 +112,7 @@ const App: React.FC = () => {
         setCurrentView('success');
         
         // Clean URL to success state
-        window.history.replaceState({}, document.title, window.location.pathname + '#/success');
+        navigate(`${location.pathname}#/success`, { replace: true });
       } else {
         setError('Payment was not completed. Please try again.');
         setCurrentView('booking');
@@ -106,7 +129,11 @@ const App: React.FC = () => {
     setLanguage(lang);
     localStorage.setItem('ldr_language', lang);
     setIsLangMenuOpen(false);
-  }, []);
+    
+    // Navigate to the new language path
+    const newPath = lang === 'en' ? '/' : `/${lang}`;
+    navigate(`${newPath}${location.search}${location.hash}`);
+  }, [navigate, location.search, location.hash]);
 
   const handleBookingComplete = useCallback((result: BookingResult) => {
     setBookingResult(result);
@@ -119,8 +146,8 @@ const App: React.FC = () => {
     localStorage.removeItem('ldr_latest_booking');
     setError(null);
     setCurrentView('booking');
-    window.history.replaceState({}, document.title, window.location.pathname + '#/');
-  }, []);
+    navigate(location.pathname, { replace: true });
+  }, [navigate, location.pathname]);
 
   if (isVerifying) {
     return (
@@ -222,6 +249,16 @@ const App: React.FC = () => {
         <Footer language={language} />
       </div>
     </div>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <Routes>
+      <Route path="/:lang" element={<MainApp />} />
+      <Route path="/" element={<MainApp />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 };
 
