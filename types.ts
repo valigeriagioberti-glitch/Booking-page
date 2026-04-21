@@ -31,6 +31,15 @@ export interface BookingResult extends BookingData {
   bookingRef: string;
   status: 'pending' | 'success' | 'failed';
   timestamp?: string;
+  pickUp?: {
+    datetime: string | Date;
+    date: string;
+    time: string;
+  };
+  dropOff?: {
+    date: string;
+    time: string;
+  };
 }
 
 export type ViewState = 'booking' | 'success' | 'verify';

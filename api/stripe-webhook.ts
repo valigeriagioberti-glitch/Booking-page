@@ -190,8 +190,11 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
   const customerPhone = metadata.customerPhone || '—';
   const dropOffDate = metadata.dropOffDate || '—';
   const dropOffTime = metadata.dropOffTime || '—';
-  const pickUpDate = metadata.pickUpDate || '—';
-  const pickUpTime = metadata.pickUpTime || '—';
+  // Extract pickUp variables and ensure valid dating
+  const pickUpDate = metadata.pickUpDate || new Date().toISOString().split('T')[0];
+  const pickUpTime = metadata.pickUpTime || '18:00';
+  const pickupDateTime = new Date(`${pickUpDate}T${pickUpTime}`);
+
   const billableDaysRaw = metadata.billableDays || '1';
   const siteUrl = metadata.siteUrl || 'https://booking.luggagedepositrome.com';
   
@@ -233,6 +236,7 @@ async function handleSuccessfulPayment(session: Stripe.Checkout.Session) {
           time: dropOffTime,
         },
         pickUp: {
+          datetime: pickupDateTime,
           date: pickUpDate,
           time: pickUpTime,
         },

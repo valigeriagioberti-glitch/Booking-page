@@ -25,11 +25,18 @@ export default async function handler(req: any, res: any) {
       // Fallback to ID suffix only if metadata version is missing
       const bookingRef = metadata.bookingRef || session.id.substring(session.id.length - 8).toUpperCase();
 
+      const pickupDateTime = new Date(`${metadata.pickUpDate}T${metadata.pickUpTime}`);
+
       const booking = {
         quantities,
         dropOffDate: metadata.dropOffDate,
         dropOffTime: metadata.dropOffTime,
-        pickUpDate: metadata.pickUpDate,
+        pickUp: {
+          datetime: pickupDateTime,
+          date: metadata.pickUpDate,
+          time: metadata.pickUpTime
+        },
+        pickUpDate: metadata.pickUpDate, // Keeping original fields for any legacy UI components
         pickUpTime: metadata.pickUpTime,
         customerName: metadata.customerName,
         customerEmail: session.customer_details?.email,
