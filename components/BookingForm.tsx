@@ -18,13 +18,14 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
   
   const generateTimeOptions = () => {
     const options = [];
-    // Limit range from 08:30 to 22:20
+    // Limit range from 08:30 to 22:50
     for (let h = 8; h <= 22; h++) {
       for (let m = 0; m < 60; m += 30) {
         if (h === 8 && m === 0) continue; // Start at 8:30
         if (h === 22) {
           options.push("22:00");
-          options.push("22:20");
+          options.push("22:30");
+          options.push("22:50");
           return options;
         }
         const timeStr = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
