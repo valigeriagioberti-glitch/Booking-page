@@ -45,6 +45,33 @@ export default async function handler(req: any, res: any) {
     if (!isValid(start) || !isValid(end) || isBefore(end, start)) {
       return res.status(400).json({ error: 'Invalid storage dates selected' });
     }
+
+    // Friday closed hours validation (12:00 to 13:15)
+    const isFridayDate = (dateStr: string) => {
+      if (!dateStr) return false;
+      const parts = dateStr.split('-');
+      if (parts.length !== 3) return false;
+      const [y, m, d] = parts.map(Number);
+      return new Date(y, m - 1, d).getDay() === 5;
+    };
+
+    const isFridayClosed = (timeStr: string) => {
+      if (!timeStr) return false;
+      const [hStr, mStr] = timeStr.split(':');
+      const h = parseInt(hStr, 10);
+      const m = parseInt(mStr, 10);
+      if (isNaN(h) || isNaN(m)) return false;
+      const totalMinutes = h * 60 + m;
+      return totalMinutes >= 720 && totalMinutes <= 795;
+    };
+
+    if (isFridayDate(dropOffDate) && isFridayClosed(dropOffTime)) {
+      return res.status(400).json({ error: 'Drop-off cannot be booked between 12:00 and 13:15 on Fridays (closed).' });
+    }
+
+    if (isFridayDate(pickUpDate) && isFridayClosed(pickUpTime)) {
+      return res.status(400).json({ error: 'Pick-up cannot be booked between 12:00 and 13:15 on Fridays (closed).' });
+    }
     
     const billableDays = differenceInDays(end, start) + 1;
 

@@ -9,6 +9,9 @@
     "start": "NODE_ENV=production node --import tsx server.ts",
     "lint": "tsc --noEmit"
   },
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "dependencies": {
     "buffer": "^6.0.3",
     "date-fns": "^4.1.0",

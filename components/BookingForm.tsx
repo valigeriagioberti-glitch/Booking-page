@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Calendar, Plus, Minus, CreditCard, User, Mail, Phone, Clock, Info, Backpack, Briefcase, Luggage, Check } from 'lucide-react';
 import { differenceInDays, format, isValid, isBefore } from 'date-fns';
 import { parseISO } from 'date-fns/parseISO';
@@ -7,6 +7,26 @@ import { startOfDay } from 'date-fns/startOfDay';
 import { BagSize, BookingData, BookingResult, Language } from '../types';
 import { PRICING_RULES } from '../constants';
 import { TRANSLATIONS } from '../translations';
+
+export const isFridayDate = (dateStr: string): boolean => {
+  if (!dateStr) return false;
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return false;
+  const [y, m, d] = parts.map(Number);
+  if (isNaN(y) || isNaN(m) || isNaN(d)) return false;
+  return new Date(y, m - 1, d).getDay() === 5;
+};
+
+export const isFridayClosedTime = (timeStr: string): boolean => {
+  if (!timeStr) return false;
+  const [hStr, mStr] = timeStr.split(':');
+  const h = parseInt(hStr, 10);
+  const m = parseInt(mStr, 10);
+  if (isNaN(h) || isNaN(m)) return false;
+  const totalMinutes = h * 60 + m;
+  // Closed on Fridays from 12:00 to 13:15 (720 to 795 minutes)
+  return totalMinutes >= 720 && totalMinutes <= 795;
+};
 
 interface BookingFormProps {
   onComplete: (result: BookingResult) => void;
@@ -55,6 +75,35 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const isDropOffFriday = useMemo(() => isFridayDate(formData.dropOffDate), [formData.dropOffDate]);
+  const isPickUpFriday = useMemo(() => isFridayDate(formData.pickUpDate), [formData.pickUpDate]);
+
+  const dropOffTimeOptions = useMemo(() => {
+    if (!isDropOffFriday) return timeOptions;
+    return timeOptions.filter(time => !isFridayClosedTime(time));
+  }, [timeOptions, isDropOffFriday]);
+
+  const pickUpTimeOptions = useMemo(() => {
+    if (!isPickUpFriday) return timeOptions;
+    return timeOptions.filter(time => !isFridayClosedTime(time));
+  }, [timeOptions, isPickUpFriday]);
+
+  // Automatically shift out of Friday closed hours (12:00 - 13:15) if selected
+  useEffect(() => {
+    if (isDropOffFriday && isFridayClosedTime(formData.dropOffTime)) {
+      setFormData(prev => ({ ...prev, dropOffTime: '13:30' }));
+    }
+  }, [isDropOffFriday, formData.dropOffTime]);
+
+  useEffect(() => {
+    if (isPickUpFriday && isFridayClosedTime(formData.pickUpTime)) {
+      setFormData(prev => ({ ...prev, pickUpTime: '13:30' }));
+    }
+  }, [isPickUpFriday, formData.pickUpTime]);
+
+  const isDropOffClosed = isDropOffFriday && isFridayClosedTime(formData.dropOffTime);
+  const isPickUpClosed = isPickUpFriday && isFridayClosedTime(formData.pickUpTime);
+
   const billableDays = useMemo(() => {
     const start = startOfDay(parseISO(formData.dropOffDate));
     const end = startOfDay(parseISO(formData.pickUpDate));
@@ -102,14 +151,21 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
     return (
       totalBags > 0 && 
       billableDays > 0 && 
+      !isDropOffClosed &&
+      !isPickUpClosed &&
       formData.customerName.trim().length >= 2 && 
       isValidEmail(formData.customerEmail) && 
       formData.customerPhone.trim().length >= 5
     );
-  }, [totalBags, billableDays, formData.customerName, formData.customerEmail, formData.customerPhone]);
+  }, [totalBags, billableDays, isDropOffClosed, isPickUpClosed, formData.customerName, formData.customerEmail, formData.customerPhone]);
 
   const handlePayment = async () => {
-    if (!isFormValid) return;
+    if (!isFormValid || isDropOffClosed || isPickUpClosed) {
+      if (isDropOffClosed || isPickUpClosed) {
+        setError(t.booking.fridayDisclaimer);
+      }
+      return;
+    }
     setIsLoading(true);
     setError(null);
 
@@ -287,9 +343,15 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
                     onChange={handleInputChange}
                     className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-900/10 focus:border-green-900 text-sm appearance-none bg-white font-medium"
                   >
-                    {timeOptions.map(t => <option key={t} value={t}>{t}</option>)}
+                    {dropOffTimeOptions.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
+                {isDropOffFriday && (
+                  <p className="text-[11px] font-semibold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200/60 mt-1 flex items-center gap-1.5">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                    {t.booking.fridayClosedWarning}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -319,9 +381,15 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
                     onChange={handleInputChange}
                     className="w-full pl-12 pr-4 py-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-900/10 focus:border-green-900 text-sm appearance-none bg-white font-medium"
                   >
-                    {timeOptions.map(t => <option key={t} value={t}>{t}</option>)}
+                    {pickUpTimeOptions.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
+                {isPickUpFriday && (
+                  <p className="text-[11px] font-semibold text-amber-800 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200/60 mt-1 flex items-center gap-1.5">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                    {t.booking.fridayClosedWarning}
+                  </p>
+                )}
               </div>
             </div>
           </div>
