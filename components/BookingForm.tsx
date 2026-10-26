@@ -72,6 +72,7 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
     customerPhone: '',
   });
 
+  const [hasUserChangedPickupDate, setHasUserChangedPickupDate] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -129,6 +130,34 @@ export const BookingForm: React.FC<BookingFormProps> = ({ onComplete, language }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+
+    if (name === 'pickUpDate') {
+      setHasUserChangedPickupDate(true);
+      setFormData(prev => ({ ...prev, pickUpDate: value }));
+      return;
+    }
+
+    if (name === 'dropOffDate') {
+      const todayStr = format(new Date(), 'yyyy-MM-dd');
+      setFormData(prev => {
+        const isFuture = value > todayStr;
+        const isPickupEarlier = prev.pickUpDate < value;
+        const isPickupSameAsPrevDropoff = prev.pickUpDate === prev.dropOffDate;
+
+        // If customer selects drop-off date first and it's in the future,
+        // or if pickup date is before the new drop-off date,
+        // or if pickup date was matching the previous drop-off date:
+        const shouldUpdatePickup = (!hasUserChangedPickupDate && isFuture) || isPickupEarlier || (isFuture && isPickupSameAsPrevDropoff);
+
+        return {
+          ...prev,
+          dropOffDate: value,
+          pickUpDate: shouldUpdatePickup ? value : prev.pickUpDate,
+        };
+      });
+      return;
+    }
+
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
