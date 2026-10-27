@@ -72,6 +72,14 @@ export default async function handler(req: any, res: any) {
     if (isFridayDate(pickUpDate) && isFridayClosed(pickUpTime)) {
       return res.status(400).json({ error: 'Pick-up cannot be booked between 12:00 and 13:15 on Fridays (closed).' });
     }
+
+    if (pickUpTime && pickUpTime > '22:00') {
+      return res.status(400).json({ error: 'Pick-up cannot be booked after 22:00 (closing time).' });
+    }
+
+    if (dropOffTime && dropOffTime > '22:00') {
+      return res.status(400).json({ error: 'Drop-off cannot be booked after 22:00 (closing time).' });
+    }
     
     const billableDays = differenceInDays(end, start) + 1;
 
